@@ -68,27 +68,52 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol):
     gw = read_csv(os.path.join(run_dir, "gateway.csv"))
     D = s["duration_s"]
     dt = cfg_p["dt_s"]
-    merge = 0.05 * D
-    te = truth_episodes(trace, prof, dt, merge)
-    ne = episodes(sm["t"], sm["node_state"] == 2, sm["t"] + sm["interval"], merge)
+    # Truth is sampled at the trace interval, while detections may be sparse
+    # because the node sleeps between samples. Use separate merge windows.
+    truth_merge = max(2 * dt, 60)
+    sample_merge = 2 * max(
+        dt,
+        prof["sampling"]["stable_s"],
+        prof["sampling"]["active_s"],
+        prof["sampling"]["alert_s"],
+    )
+    te = truth_episodes(trace, prof, dt, truth_merge)
+    ne = episodes(sm["t"], sm["node_state"] == 2,
+                  sm["t"] + sm["interval"], sample_merge)
 
-    matched, delays, gw_delays = set(), [], []
+    matched_at = {}
     false_eps = 0
     for a, b in ne:
         hit = [k for k, (ta, tb) in enumerate(te) if ta - tol <= a <= tb + tol]
-        if hit:
-            matched.add(hit[0])
-        else:
+        if not hit:
             false_eps += 1
+            continue
+        # Assign a node alert to the closest true event. Count each true event
+        # once, using its first alert; unassigned alerts remain visible as
+        # additional alert episodes rather than inflating event detections.
+        k = min(hit, key=lambda j: max(te[j][0] - a, 0, a - te[j][1]))
+        if k not in matched_at or a < matched_at[k]:
+            matched_at[k] = a
+
+    delays, early_leads = [], []
+    for k, first_alert in matched_at.items():
+        onset = te[k][0]
+        if first_alert < onset:
+            early_leads.append(onset - first_alert)
+        else:
+            delays.append(first_alert - onset)
+
     gts = gw.get("ts", np.array([]))
-    for k, (ta, tb) in enumerate(te):
-        cand = [a for a, b in ne if ta - tol <= a <= tb + tol]
-        if cand:
-            delays.append(min(cand) - ta)
-        if len(gts):
+    gw_delays, gw_early_leads = [], []
+    if len(gts):
+        for ta, tb in te:
             m = (gw["node_state"] == 2) & (gts >= ta - tol) & (gts <= tb + tol)
             if m.any():
-                gw_delays.append(gw["t_rx"][m].min() - ta)
+                first_notice = gw["t_rx"][m].min()
+                if first_notice < ta:
+                    gw_early_leads.append(ta - first_notice)
+                else:
+                    gw_delays.append(first_notice - ta)
 
     # gateway reconstruction error (sample-and-hold), in units of delta_report
     nrmse = []
@@ -148,7 +173,9 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol):
         "false_alarm_episodes": false_eps,
         "false_alarm_rate": round(false_eps / len(ne), 3) if ne else 0.0,
         "node_detect_delay_s": round(float(np.mean(delays)), 1) if delays else np.nan,
+        "node_early_warning_s": round(float(np.mean(early_leads)), 1) if early_leads else np.nan,
         "gateway_notify_delay_s": round(float(np.mean(gw_delays)), 1) if gw_delays else np.nan,
+        "gateway_early_warning_s": round(float(np.mean(gw_early_leads)), 1) if gw_early_leads else np.nan,
         "fault_episodes": fault_truth,
         "faults_detected": fault_det,
         "fault_detect_delay_s": round(float(np.mean(fault_delay)), 1) if fault_delay else np.nan,
@@ -239,7 +266,8 @@ def main():
                         "detected/truth": f"{tot('detected_events')}/{tot('truth_crit_events')}",
                         "false_alarms": tot("false_alarm_episodes"),
                         "faults_det/truth": f"{tot('faults_detected')}/{tot('fault_episodes')}",
-                        "node_delay_s": mean("node_detect_delay_s"), "gw_delay_s": mean("gateway_notify_delay_s"),
+                        "node_delay_s": mean("node_detect_delay_s"), "node_lead_s": mean("node_early_warning_s"),
+                        "gw_delay_s": mean("gateway_notify_delay_s"), "gw_lead_s": mean("gateway_early_warning_s"),
                         "lost_pkts": tot("data_lost_packets"), "recovered": tot("recovered_after_outage"),
                         "recon_err": round(float(np.nanmean([r["recon_err_mean"] for r in sel])), 2)})
     write_rows(os.path.join(RES, "aggregate.csv"), agg)
@@ -269,7 +297,8 @@ def main():
         f.write("\n## Per-scenario detail\n\n")
         cols = ["profile", "scenario", "strategy", "samples", "tx_attempts", "bytes_phy", "airtime_s", "energy_J",
                 "truth_crit_events", "detected_events", "false_alarm_episodes", "node_detect_delay_s",
-                "gateway_notify_delay_s", "faults_detected", "fault_detect_delay_s", "data_lost_packets",
+                "node_early_warning_s", "gateway_notify_delay_s", "gateway_early_warning_s",
+                "faults_detected", "fault_detect_delay_s", "data_lost_packets",
                 "recovered_after_outage", "recon_err_mean"]
         f.write(md_table(rows, cols))
         f.write("\n## Stable-interval sweep (adaptive, scenario '%s')\n\n" % sw["stable_sweep_scenario"])
