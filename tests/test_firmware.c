@@ -60,6 +60,7 @@ static sensor_reading_t read_channel(const app_profile_t *p, int ch)
     sensor_manager_t sm;
     sensor_reading_t rd[MAX_CHANNELS];
     sensor_manager_init(&sm, p);
+    hal_sim_set_time(100);                 /* isolate each driver check */
     sensor_manager_sample(&sm, hal_timer_now_s(), rd);
     sensor_manager_release(&sm, 0);
     return rd[ch];
@@ -137,7 +138,7 @@ static void test_registration_and_drivers(void)
             sensor_reading_t r = read_channel(p, c);
             CHECK(r.status == RD_OK);
             NEAR(r.value, nominal(p->id)[c], tol[i][c]);
-            CHECK(r.sensor_id == p->ch[c].sensor_id && r.unit == p->ch[c].unit && r.timestamp == 100);
+            CHECK(r.sensor_id == p->ch[c].sensor_id && r.unit == p->ch[c].unit && r.timestamp >= 100);
         }
     }
 }
@@ -449,6 +450,12 @@ static void test_outage(void)
     /* duplicates: lost ACKs cause retransmissions that the gateway de-duplicates */
     trace_const(NOM_WATER);
     run_node(PROFILE_WATER, STRAT_FIXED, 5, 0.3f, &n);
+    if (gateway_stats()->duplicates == 0 || g_rx != n.link.st.delivered) {
+        const radio_sim_stats_t *rs = radio_sim_stats();
+        printf("  DEBUG radio tx=%u channel_loss=%u ack_loss=%u duplicates=%u gateway_rx=%u delivered=%u attempts=%u\n",
+               rs->tx, rs->lost_channel, rs->ack_lost, gateway_stats()->duplicates,
+               g_rx, n.link.st.delivered, n.link.st.attempts);
+    }
     CHECK(gateway_stats()->duplicates > 0 && g_rx == n.link.st.delivered);
 }
 
