@@ -4,130 +4,130 @@ All values are produced by the software model (native simulation). Energy is an 
 
 ## Totals over the 8 scenarios per profile
 
-| profile | strategy | samples | tx_attempts | bytes_phy | airtime_s | energy_J | e_sensor_J | e_radio_J | e_mcu_J | e_sleep_J | detected/truth | false_alarms | faults_det/truth | node_delay_s | gw_delay_s | lost_pkts | recovered | recon_err |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| water | fixed | 5760 | 6136 | 263848 | 1765.6 | 1042.6 | 477.4 | 521.6 | 41.8 | 1.85 | 4/4 | 0 | 3/3 | 314.8 | 1634.8 | 19 | 128 | 0.11 |
-| water | adaptive_tx | 5760 | 747 | 34537 | 234.2 | 589.8 | 477.4 | 68.9 | 41.7 | 1.86 | 4/4 | 0 | 3/3 | 314.8 | 1664.8 | 0 | 38 | 0.12 |
-| water | adaptive | 3481 | 742 | 34270 | 232.5 | 384.2 | 288.7 | 68.4 | 25.2 | 1.88 | 4/4 | 0 | 3/3 | 104.8 | 1526.0 | 0 | 38 | 0.13 |
-| air | fixed | 5760 | 6142 | 264106 | 1767.3 | 49695.2 | 48581.1 | 522.1 | 591.2 | 0.92 | 4/4 | 0 | 3/3 | 309.0 | 1659.0 | 21 | 128 | 0.21 |
-| air | adaptive_tx | 5760 | 1210 | 53322 | 367.8 | 49281.5 | 48581.1 | 108.4 | 591.0 | 0.93 | 4/4 | 0 | 3/3 | 309.0 | 1659.0 | 0 | 60 | 0.25 |
-| air | adaptive | 3397 | 1127 | 50001 | 344.1 | 28813.1 | 28432.7 | 101.4 | 277.5 | 1.46 | 4/4 | 0 | 3/3 | 234.0 | 1600.2 | 0 | 60 | 0.22 |
-| soil | fixed | 4608 | 5068 | 217924 | 1458.3 | 559.7 | 101.7 | 430.6 | 19.8 | 7.67 | 4/4 | 0 | 3/3 | 1457.5 | 6557.5 | 0 | 116 | 0.13 |
-| soil | adaptive_tx | 4608 | 1136 | 46032 | 327.6 | 225.4 | 101.7 | 96.4 | 19.7 | 7.68 | 4/4 | 0 | 3/3 | 1457.5 | 6557.5 | 0 | 40 | 0.34 |
-| soil | adaptive | 2716 | 906 | 37470 | 264.5 | 157.5 | 60.3 | 77.9 | 11.6 | 7.69 | 4/4 | 0 | 3/3 | 542.5 | 6227.5 | 0 | 36 | 0.42 |
+| profile | strategy | samples | tx_attempts | bytes_phy | airtime_s | energy_J | e_sensor_J | e_radio_J | e_mcu_J | e_sleep_J | detected/truth | false_alarms | faults_det/truth | node_delay_s | node_lead_s | gw_delay_s | gw_lead_s | lost_pkts | recovered | recon_err |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| water | fixed | 5488 | 5845 | 251335 | 1681.9 | 1927.2 | 1388.6 | 496.9 | 39.8 | 1.85 | 4/9 | 0 | 3/3 | 360.5 | n/a | 1715.0 | 591.0 | 14 | 128 | 0.12 |
+| water | adaptive_tx | 5488 | 723 | 33289 | 226.1 | 1496.7 | 1388.6 | 66.6 | 39.7 | 1.86 | 4/9 | 0 | 3/3 | 360.5 | n/a | 1732.0 | 553.2 | 0 | 39 | 0.13 |
+| water | adaptive | 3029 | 706 | 33098 | 223.3 | 856.2 | 766.6 | 65.8 | 21.9 | 1.89 | 4/9 | 0 | 3/3 | 257.0 | n/a | 1594.2 | 520.2 | 0 | 35 | 0.15 |
+| air | fixed | 3800 | 4048 | 174064 | 1164.8 | 38133.1 | 37397.7 | 344.1 | 390.0 | 1.26 | 5/9 | 0 | 3/3 | 536.4 | n/a | 1831.8 | 556.0 | 0 | 99 | 0.25 |
+| air | adaptive_tx | 3800 | 994 | 45618 | 310.0 | 37880.2 | 37397.7 | 91.3 | 389.9 | 1.27 | 5/9 | 0 | 3/3 | 536.4 | n/a | 1809.0 | 556.0 | 0 | 44 | 0.3 |
+| air | adaptive | 2623 | 1054 | 48598 | 329.9 | 26078.4 | 25768.9 | 97.2 | 210.8 | 1.57 | 6/9 | 0 | 3/3 | 247.2 | n/a | 1595.0 | 565.6 | 0 | 56 | 0.24 |
+| soil | fixed | 4584 | 4952 | 212936 | 1424.9 | 599.6 | 151.4 | 420.9 | 19.7 | 7.67 | 4/25 | 0 | 3/3 | 1551.0 | n/a | 6609.5 | 476.0 | 0 | 115 | 0.13 |
+| soil | adaptive_tx | 4584 | 1000 | 41796 | 293.9 | 265.3 | 151.4 | 86.6 | 19.6 | 7.68 | 4/25 | 0 | 3/3 | 1551.0 | n/a | 6685.0 | 274.7 | 0 | 38 | 0.34 |
+| soil | adaptive | 2634 | 862 | 35962 | 253.0 | 180.9 | 87.4 | 74.5 | 11.2 | 7.69 | 4/25 | 0 | 3/3 | 724.5 | n/a | 6329.5 | 299.0 | 0 | 36 | 0.42 |
 
 ## Change relative to fixed-period reporting (negative = reduction)
 
 | profile | strategy | tx_attempts_% | bytes_% | airtime_% | energy_% | samples_% |
 |---|---|---|---|---|---|---|
-| water | adaptive_tx | -87.8 | -86.9 | -86.7 | -43.4 | 0.0 |
-| water | adaptive | -87.9 | -87.0 | -86.8 | -63.1 | -39.6 |
-| air | adaptive_tx | -80.3 | -79.8 | -79.2 | -0.8 | 0.0 |
-| air | adaptive | -81.7 | -81.1 | -80.5 | -42.0 | -41.0 |
-| soil | adaptive_tx | -77.6 | -78.9 | -77.5 | -59.7 | 0.0 |
-| soil | adaptive | -82.1 | -82.8 | -81.9 | -71.9 | -41.1 |
+| water | adaptive_tx | -87.6 | -86.8 | -86.6 | -22.3 | 0.0 |
+| water | adaptive | -87.9 | -86.8 | -86.7 | -55.6 | -44.8 |
+| air | adaptive_tx | -75.4 | -73.8 | -73.4 | -0.7 | 0.0 |
+| air | adaptive | -74.0 | -72.1 | -71.7 | -31.6 | -31.0 |
+| soil | adaptive_tx | -79.8 | -80.4 | -79.4 | -55.8 | 0.0 |
+| soil | adaptive | -82.6 | -83.1 | -82.2 | -69.8 | -42.5 |
 
 ## Per-scenario detail
 
-| profile | scenario | strategy | samples | tx_attempts | bytes_phy | airtime_s | energy_J | truth_crit_events | detected_events | false_alarm_episodes | node_detect_delay_s | gateway_notify_delay_s | faults_detected | fault_detect_delay_s | data_lost_packets | recovered_after_outage | recon_err_mean |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| water | stable | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.051 |
-| water | stable | adaptive_tx | 720 | 49 | 2875 | 18.032 | 70.409 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.049 |
-| water | stable | adaptive | 148 | 49 | 2875 | 18.032 | 18.919 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.065 |
-| water | gradual | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 1 | 1 | 0 | 217.0 | 217.0 | 0 | nan | 0 | 0 | 0.058 |
-| water | gradual | adaptive_tx | 720 | 126 | 5290 | 37.157 | 76.092 | 1 | 1 | 0 | 217.0 | 217.0 | 0 | nan | 0 | 0 | 0.146 |
-| water | gradual | adaptive | 738 | 123 | 5169 | 36.294 | 77.457 | 1 | 1 | 0 | -38.0 | -38.0 | 0 | nan | 0 | 0 | 0.169 |
-| water | sudden | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 1 | 1 | 0 | 420.0 | 420.0 | 0 | nan | 0 | 0 | 0.163 |
-| water | sudden | adaptive_tx | 720 | 87 | 4025 | 27.287 | 73.162 | 1 | 1 | 0 | 420.0 | 420.0 | 0 | nan | 0 | 0 | 0.179 |
-| water | sudden | adaptive | 386 | 88 | 4056 | 27.533 | 43.169 | 1 | 1 | 0 | 165.0 | 165.0 | 0 | nan | 0 | 0 | 0.164 |
-| water | noisy | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.195 |
-| water | noisy | adaptive_tx | 720 | 51 | 2937 | 18.525 | 70.556 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.119 |
-| water | noisy | adaptive | 580 | 50 | 2906 | 18.278 | 57.88 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.136 |
-| water | sensor_failure | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 0 | 0 | 0 | nan | nan | 2 | 120.0 | 0 | 0 | 0.054 |
-| water | sensor_failure | adaptive_tx | 720 | 55 | 3033 | 19.389 | 70.814 | 0 | 0 | 0 | nan | nan | 2 | 120.0 | 0 | 0 | 0.051 |
-| water | sensor_failure | adaptive | 257 | 55 | 3033 | 19.389 | 29.136 | 0 | 0 | 0 | nan | nan | 2 | 690.0 | 0 | 0 | 0.064 |
-| water | missing | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 0 | 0 | 0 | nan | nan | 1 | 120.0 | 0 | 0 | 0.054 |
-| water | missing | adaptive_tx | 720 | 55 | 3061 | 19.512 | 70.849 | 0 | 0 | 0 | nan | nan | 1 | 120.0 | 0 | 0 | 0.049 |
-| water | missing | adaptive | 176 | 52 | 2968 | 18.772 | 21.66 | 0 | 0 | 0 | nan | nan | 1 | 840.0 | 0 | 0 | 0.064 |
-| water | outage | fixed | 720 | 935 | 40205 | 269.043 | 144.355 | 1 | 1 | 0 | 456.0 | 5736.0 | 0 | nan | 19 | 128 | 0.226 |
-| water | outage | adaptive_tx | 720 | 169 | 7127 | 49.98 | 79.747 | 1 | 1 | 0 | 456.0 | 5856.0 | 0 | nan | 0 | 38 | 0.23 |
-| water | outage | adaptive | 316 | 169 | 7127 | 49.98 | 43.38 | 1 | 1 | 0 | 201.0 | 5886.0 | 0 | nan | 0 | 38 | 0.21 |
-| water | recovery | fixed | 720 | 743 | 31949 | 213.795 | 128.323 | 1 | 1 | 0 | 166.0 | 166.0 | 0 | nan | 0 | 0 | 0.1 |
-| water | recovery | adaptive_tx | 720 | 155 | 6189 | 44.314 | 78.216 | 1 | 1 | 0 | 166.0 | 166.0 | 0 | nan | 0 | 0 | 0.14 |
-| water | recovery | adaptive | 880 | 156 | 6136 | 44.192 | 92.587 | 1 | 1 | 0 | 91.0 | 91.0 | 0 | nan | 0 | 0 | 0.167 |
-| air | stable | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.099 |
-| air | stable | adaptive_tx | 720 | 73 | 4291 | 26.904 | 6154.532 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.085 |
-| air | stable | adaptive | 243 | 62 | 3642 | 22.837 | 2081.47 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.122 |
-| air | gradual | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 1 | 1 | 0 | 78.0 | 78.0 | 0 | nan | 0 | 0 | 0.117 |
-| air | gradual | adaptive_tx | 720 | 210 | 8182 | 59.116 | 6164.12 | 1 | 1 | 0 | 78.0 | 78.0 | 0 | nan | 0 | 0 | 0.285 |
-| air | gradual | adaptive | 600 | 206 | 8246 | 58.989 | 5049.869 | 1 | 1 | 0 | 258.0 | 258.0 | 0 | nan | 0 | 0 | 0.215 |
-| air | sudden | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 1 | 1 | 0 | 420.0 | 420.0 | 0 | nan | 0 | 0 | 0.303 |
-| air | sudden | adaptive_tx | 720 | 139 | 6281 | 42.946 | 6159.299 | 1 | 1 | 0 | 420.0 | 420.0 | 0 | nan | 0 | 0 | 0.349 |
-| air | sudden | adaptive | 362 | 134 | 5986 | 41.097 | 3059.727 | 1 | 1 | 0 | 210.0 | 210.0 | 0 | nan | 0 | 0 | 0.273 |
-| air | noisy | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.387 |
-| air | noisy | adaptive_tx | 720 | 156 | 6844 | 47.264 | 6160.582 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.324 |
-| air | noisy | adaptive | 648 | 136 | 6232 | 42.328 | 5541.697 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.317 |
-| air | sensor_failure | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 0 | 0 | 0 | nan | nan | 2 | 120.0 | 0 | 0 | 0.099 |
-| air | sensor_failure | adaptive_tx | 720 | 79 | 4477 | 28.384 | 6154.973 | 0 | 0 | 0 | nan | nan | 2 | 120.0 | 0 | 0 | 0.083 |
-| air | sensor_failure | adaptive | 344 | 70 | 3946 | 25.057 | 2944.305 | 0 | 0 | 0 | nan | nan | 2 | 420.0 | 0 | 0 | 0.103 |
-| air | missing | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 0 | 0 | 0 | nan | nan | 1 | 120.0 | 0 | 0 | 0.105 |
-| air | missing | adaptive_tx | 720 | 88 | 4756 | 30.605 | 6155.633 | 0 | 0 | 0 | nan | nan | 1 | 120.0 | 0 | 0 | 0.097 |
-| air | missing | adaptive | 274 | 66 | 3794 | 23.947 | 2346.428 | 0 | 0 | 0 | nan | nan | 1 | 240.0 | 0 | 0 | 0.121 |
-| air | outage | fixed | 720 | 941 | 40463 | 270.769 | 6226.37 | 1 | 1 | 0 | 456.0 | 5856.0 | 0 | nan | 21 | 128 | 0.391 |
-| air | outage | adaptive_tx | 720 | 212 | 9076 | 63.296 | 6165.192 | 1 | 1 | 0 | 456.0 | 5856.0 | 0 | nan | 0 | 60 | 0.426 |
-| air | outage | adaptive | 328 | 198 | 8418 | 58.857 | 2786.507 | 1 | 1 | 0 | 306.0 | 5766.0 | 0 | nan | 0 | 60 | 0.354 |
-| air | recovery | fixed | 720 | 743 | 31949 | 213.795 | 6209.839 | 1 | 1 | 0 | 282.0 | 282.0 | 0 | nan | 0 | 0 | 0.206 |
-| air | recovery | adaptive_tx | 720 | 253 | 9415 | 69.236 | 6167.132 | 1 | 1 | 0 | 282.0 | 282.0 | 0 | nan | 0 | 0 | 0.343 |
-| air | recovery | adaptive | 598 | 255 | 9737 | 70.958 | 5003.147 | 1 | 1 | 0 | 162.0 | 167.0 | 0 | nan | 0 | 0 | 0.276 |
-| soil | stable | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.06 |
-| soil | stable | adaptive_tx | 576 | 78 | 3774 | 25.188 | 23.554 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.268 |
-| soil | stable | adaptive | 99 | 59 | 2989 | 19.639 | 9.454 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.37 |
-| soil | gradual | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 1 | 1 | 0 | 490.0 | 490.0 | 0 | nan | 0 | 0 | 0.068 |
-| soil | gradual | adaptive_tx | 576 | 135 | 5625 | 39.624 | 27.837 | 1 | 1 | 0 | 490.0 | 490.0 | 0 | nan | 0 | 0 | 0.358 |
-| soil | gradual | adaptive | 687 | 121 | 5007 | 35.329 | 29.471 | 1 | 1 | 0 | 430.0 | 430.0 | 0 | nan | 0 | 0 | 0.435 |
-| soil | sudden | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 1 | 1 | 0 | 2280.0 | 2280.0 | 0 | nan | 0 | 0 | 0.207 |
-| soil | sudden | adaptive_tx | 576 | 108 | 4680 | 32.469 | 25.719 | 1 | 1 | 0 | 2280.0 | 2280.0 | 0 | nan | 0 | 0 | 0.418 |
-| soil | sudden | adaptive | 336 | 92 | 3960 | 27.537 | 17.995 | 1 | 1 | 0 | 600.0 | 600.0 | 0 | nan | 0 | 0 | 0.471 |
-| soil | noisy | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.178 |
-| soil | noisy | adaptive_tx | 576 | 79 | 3809 | 25.435 | 23.627 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.292 |
-| soil | noisy | adaptive | 162 | 67 | 3245 | 21.614 | 11.687 | 0 | 0 | 0 | nan | nan | 0 | nan | 0 | 0 | 0.359 |
-| soil | sensor_failure | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 0 | 0 | 0 | nan | nan | 2 | 690.0 | 0 | 0 | 0.12 |
-| soil | sensor_failure | adaptive_tx | 576 | 74 | 3622 | 24.078 | 23.225 | 0 | 0 | 0 | nan | nan | 2 | 690.0 | 0 | 0 | 0.289 |
-| soil | sensor_failure | adaptive | 182 | 65 | 3203 | 21.243 | 12.098 | 0 | 0 | 0 | nan | nan | 2 | 4890.0 | 0 | 0 | 0.375 |
-| soil | missing | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 0 | 0 | 0 | nan | nan | 1 | 610.0 | 0 | 0 | 0.059 |
-| soil | missing | adaptive_tx | 576 | 87 | 4025 | 27.287 | 24.179 | 0 | 0 | 0 | nan | nan | 1 | 610.0 | 0 | 0 | 0.272 |
-| soil | missing | adaptive | 122 | 61 | 3031 | 20.01 | 10.167 | 0 | 0 | 0 | nan | nan | 1 | 4510.0 | 0 | 0 | 0.367 |
-| soil | outage | fixed | 576 | 910 | 39130 | 261.849 | 93.096 | 1 | 1 | 0 | 2120.0 | 22520.0 | 0 | nan | 0 | 116 | 0.255 |
-| soil | outage | adaptive_tx | 576 | 416 | 14200 | 108.355 | 47.812 | 1 | 1 | 0 | 2120.0 | 22520.0 | 0 | nan | 0 | 40 | 0.48 |
-| soil | outage | adaptive | 291 | 292 | 10192 | 77.017 | 31.22 | 1 | 1 | 0 | 740.0 | 23480.0 | 0 | nan | 0 | 36 | 0.497 |
-| soil | recovery | fixed | 576 | 594 | 25542 | 170.92 | 66.664 | 1 | 1 | 0 | 940.0 | 940.0 | 0 | nan | 0 | 0 | 0.13 |
-| soil | recovery | adaptive_tx | 576 | 159 | 6297 | 45.178 | 29.492 | 1 | 1 | 0 | 940.0 | 940.0 | 0 | nan | 0 | 0 | 0.373 |
-| soil | recovery | adaptive | 837 | 149 | 5843 | 42.096 | 35.399 | 1 | 1 | 0 | 400.0 | 400.0 | 0 | nan | 0 | 0 | 0.46 |
+| profile | scenario | strategy | samples | tx_attempts | bytes_phy | airtime_s | energy_J | truth_crit_events | detected_events | false_alarm_episodes | node_detect_delay_s | node_early_warning_s | gateway_notify_delay_s | gateway_early_warning_s | faults_detected | fault_detect_delay_s | data_lost_packets | recovered_after_outage | recon_err_mean |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| water | stable | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.05 |
+| water | stable | adaptive_tx | 686 | 47 | 2757 | 17.292 | 183.852 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.049 |
+| water | stable | adaptive | 146 | 49 | 2875 | 18.032 | 43.58 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.064 |
+| water | gradual | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 1 | 1 | 0 | 295.0 | nan | 295.0 | nan | 0 | nan | 0 | 0 | 0.058 |
+| water | gradual | adaptive_tx | 686 | 122 | 5082 | 35.801 | 189.352 | 1 | 1 | 0 | 295.0 | nan | 295.0 | nan | 0 | nan | 0 | 0 | 0.148 |
+| water | gradual | adaptive | 637 | 122 | 5110 | 35.924 | 176.64 | 1 | 1 | 0 | 118.0 | nan | 118.0 | nan | 0 | nan | 0 | 0 | 0.174 |
+| water | sudden | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 1 | 1 | 0 | 489.0 | nan | 489.0 | nan | 0 | nan | 0 | 0 | 0.182 |
+| water | sudden | adaptive_tx | 686 | 83 | 3845 | 26.054 | 186.457 | 1 | 1 | 0 | 489.0 | nan | 494.0 | nan | 0 | nan | 0 | 0 | 0.197 |
+| water | sudden | adaptive | 334 | 83 | 3901 | 26.299 | 94.95 | 1 | 1 | 0 | 372.0 | nan | 372.0 | nan | 0 | nan | 0 | 0 | 0.228 |
+| water | noisy | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.208 |
+| water | noisy | adaptive_tx | 686 | 50 | 2850 | 18.033 | 184.072 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.147 |
+| water | noisy | adaptive | 441 | 50 | 2850 | 18.033 | 120.332 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.179 |
+| water | sensor_failure | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 156.0 | 0 | 0 | 0.053 |
+| water | sensor_failure | adaptive_tx | 686 | 53 | 2915 | 18.65 | 184.257 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 156.0 | 0 | 0 | 0.055 |
+| water | sensor_failure | adaptive | 252 | 54 | 3002 | 19.143 | 71.489 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 661.5 | 0 | 0 | 0.069 |
+| water | missing | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 12.0 | 0 | 0 | 0.054 |
+| water | missing | adaptive_tx | 686 | 56 | 3036 | 19.513 | 184.512 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 12.0 | 0 | 0 | 0.047 |
+| water | missing | adaptive | 181 | 54 | 3002 | 19.143 | 53.018 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 774.0 | 0 | 0 | 0.062 |
+| water | outage | fixed | 686 | 896 | 38528 | 257.821 | 254.71 | 1 | 1 | 0 | 444.0 | nan | 5862.0 | nan | 0 | nan | 14 | 128 | 0.231 |
+| water | outage | adaptive_tx | 686 | 164 | 6916 | 48.501 | 192.975 | 1 | 1 | 0 | 444.0 | nan | 5925.0 | nan | 0 | nan | 0 | 39 | 0.247 |
+| water | outage | adaptive | 278 | 146 | 6414 | 44.304 | 85.602 | 1 | 1 | 0 | 417.0 | nan | 5766.0 | nan | 0 | nan | 0 | 35 | 0.255 |
+| water | recovery | fixed | 686 | 707 | 30401 | 203.436 | 238.921 | 6 | 1 | 0 | 214.0 | nan | 214.0 | 591.0 | 0 | nan | 0 | 0 | 0.109 |
+| water | recovery | adaptive_tx | 686 | 148 | 5888 | 42.217 | 191.257 | 6 | 1 | 0 | 214.0 | nan | 214.0 | 553.2 | 0 | nan | 0 | 0 | 0.151 |
+| water | recovery | adaptive | 760 | 148 | 5944 | 42.463 | 210.58 | 6 | 1 | 0 | 121.0 | nan | 121.0 | 520.2 | 0 | nan | 0 | 0 | 0.186 |
+| air | stable | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.108 |
+| air | stable | adaptive_tx | 475 | 69 | 4055 | 25.425 | 4731.078 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.101 |
+| air | stable | adaptive | 210 | 69 | 4055 | 25.425 | 2096.033 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.113 |
+| air | gradual | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 1 | 1 | 0 | 304.0 | nan | 304.0 | nan | 0 | nan | 0 | 0 | 0.14 |
+| air | gradual | adaptive_tx | 475 | 158 | 6542 | 46.16 | 4737.25 | 1 | 1 | 0 | 304.0 | nan | 304.0 | nan | 0 | nan | 0 | 0 | 0.326 |
+| air | gradual | adaptive | 476 | 189 | 7803 | 55.162 | 4716.395 | 1 | 1 | 0 | 39.0 | nan | 39.0 | nan | 0 | nan | 0 | 0 | 0.228 |
+| air | sudden | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 1 | 1 | 0 | 678.0 | nan | 678.0 | nan | 0 | nan | 0 | 0 | 0.381 |
+| air | sudden | adaptive_tx | 475 | 111 | 5189 | 35.053 | 4733.948 | 1 | 1 | 0 | 678.0 | nan | 678.0 | nan | 0 | nan | 0 | 0 | 0.448 |
+| air | sudden | adaptive | 303 | 124 | 5788 | 39.121 | 3010.032 | 1 | 1 | 0 | 458.0 | nan | 458.0 | nan | 0 | nan | 0 | 0 | 0.387 |
+| air | noisy | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.422 |
+| air | noisy | adaptive_tx | 475 | 138 | 6122 | 42.084 | 4736.03 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.344 |
+| air | noisy | adaptive | 370 | 107 | 5157 | 34.434 | 3689.533 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.34 |
+| air | sensor_failure | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 247.0 | 0 | 0 | 0.106 |
+| air | sensor_failure | adaptive_tx | 475 | 75 | 4241 | 26.906 | 4731.518 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 247.0 | 0 | 0 | 0.108 |
+| air | sensor_failure | adaptive | 266 | 76 | 4300 | 27.275 | 2653.421 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 585.5 | 0 | 0 | 0.107 |
+| air | missing | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 180.0 | 0 | 0 | 0.1 |
+| air | missing | adaptive_tx | 475 | 81 | 4427 | 28.386 | 4731.958 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 180.0 | 0 | 0 | 0.098 |
+| air | missing | adaptive | 228 | 75 | 4241 | 26.906 | 2275.457 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 528.0 | 0 | 0 | 0.112 |
+| air | outage | fixed | 475 | 639 | 27477 | 183.869 | 4777.757 | 1 | 1 | 0 | 724.0 | nan | 5911.0 | nan | 0 | nan | 0 | 99 | 0.467 |
+| air | outage | adaptive_tx | 475 | 176 | 7820 | 53.797 | 4739.38 | 1 | 1 | 0 | 724.0 | nan | 5820.0 | nan | 0 | nan | 0 | 44 | 0.521 |
+| air | outage | adaptive | 283 | 191 | 8397 | 57.99 | 2819.686 | 1 | 1 | 0 | 260.0 | nan | 5680.0 | nan | 0 | nan | 0 | 56 | 0.357 |
+| air | recovery | fixed | 475 | 487 | 20941 | 140.131 | 4765.043 | 6 | 2 | 0 | 439.5 | nan | 434.0 | 556.0 | 0 | nan | 0 | 0 | 0.281 |
+| air | recovery | adaptive_tx | 475 | 186 | 7222 | 52.21 | 4739.057 | 6 | 2 | 0 | 439.5 | nan | 434.0 | 556.0 | 0 | nan | 0 | 0 | 0.423 |
+| air | recovery | adaptive | 487 | 223 | 8857 | 63.553 | 4817.877 | 6 | 3 | 0 | 232.0 | nan | 203.0 | 565.6 | 0 | nan | 0 | 0 | 0.303 |
+| soil | stable | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.06 |
+| soil | stable | adaptive_tx | 573 | 77 | 3715 | 24.819 | 29.65 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.275 |
+| soil | stable | adaptive | 99 | 59 | 2989 | 19.639 | 10.54 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.372 |
+| soil | gradual | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 1 | 1 | 0 | 730.0 | nan | 730.0 | nan | 0 | nan | 0 | 0 | 0.072 |
+| soil | gradual | adaptive_tx | 573 | 134 | 5578 | 39.254 | 33.933 | 1 | 1 | 0 | 730.0 | nan | 730.0 | nan | 0 | nan | 0 | 0 | 0.363 |
+| soil | gradual | adaptive | 675 | 124 | 5012 | 35.68 | 36.668 | 1 | 1 | 0 | 878.0 | nan | 878.0 | nan | 0 | nan | 0 | 0 | 0.449 |
+| soil | sudden | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 1 | 1 | 0 | 2154.0 | nan | 2154.0 | nan | 0 | nan | 0 | 0 | 0.198 |
+| soil | sudden | adaptive_tx | 573 | 108 | 4648 | 32.346 | 31.889 | 1 | 1 | 0 | 2154.0 | nan | 2154.0 | nan | 0 | nan | 0 | 0 | 0.418 |
+| soil | sudden | adaptive | 328 | 90 | 3926 | 27.167 | 21.271 | 1 | 1 | 0 | 698.0 | nan | 698.0 | nan | 0 | nan | 0 | 0 | 0.479 |
+| soil | noisy | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.176 |
+| soil | noisy | adaptive_tx | 573 | 79 | 3805 | 25.435 | 29.832 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.283 |
+| soil | noisy | adaptive | 137 | 62 | 3010 | 20.011 | 12.063 | 0 | 0 | 0 | nan | nan | nan | nan | 0 | nan | 0 | 0 | 0.411 |
+| soil | sensor_failure | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 762.0 | 0 | 0 | 0.107 |
+| soil | sensor_failure | adaptive_tx | 573 | 76 | 3684 | 24.572 | 29.577 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 762.0 | 0 | 0 | 0.285 |
+| soil | sensor_failure | adaptive | 181 | 63 | 3185 | 20.872 | 13.945 | 0 | 0 | 0 | nan | nan | nan | nan | 2 | 4902.0 | 0 | 0 | 0.365 |
+| soil | missing | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 890.0 | 0 | 0 | 0.061 |
+| soil | missing | adaptive_tx | 573 | 91 | 4157 | 28.274 | 30.677 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 890.0 | 0 | 0 | 0.274 |
+| soil | missing | adaptive | 138 | 65 | 3119 | 20.874 | 12.356 | 0 | 0 | 0 | nan | nan | nan | nan | 1 | 1326.0 | 0 | 0 | 0.368 |
+| soil | outage | fixed | 573 | 822 | 35346 | 236.527 | 91.936 | 1 | 1 | 0 | 2318.0 | nan | 22552.0 | nan | 0 | nan | 0 | 115 | 0.262 |
+| soil | outage | adaptive_tx | 573 | 277 | 9943 | 74.298 | 44.098 | 1 | 1 | 0 | 2318.0 | nan | 22854.0 | nan | 0 | nan | 0 | 38 | 0.478 |
+| soil | outage | adaptive | 263 | 251 | 8885 | 66.776 | 30.388 | 1 | 1 | 0 | 842.0 | nan | 23502.0 | nan | 0 | nan | 0 | 36 | 0.508 |
+| soil | recovery | fixed | 573 | 590 | 25370 | 169.769 | 72.53 | 22 | 1 | 0 | 1002.0 | nan | 1002.0 | 476.0 | 0 | nan | 0 | 0 | 0.13 |
+| soil | recovery | adaptive_tx | 573 | 158 | 6266 | 44.931 | 35.623 | 22 | 1 | 0 | 1002.0 | nan | 1002.0 | 274.7 | 0 | nan | 0 | 0 | 0.366 |
+| soil | recovery | adaptive | 813 | 148 | 5836 | 41.972 | 43.649 | 22 | 1 | 0 | 480.0 | nan | 240.0 | 299.0 | 0 | nan | 0 | 0 | 0.442 |
 
 ## Stable-interval sweep (adaptive, scenario 'sudden')
 
 | profile | factor | stable_s | samples | tx_attempts | energy_J | node_detect_delay_s | gateway_notify_delay_s | recon_err_mean |
 |---|---|---|---|---|---|---|---|---|
-| water | 0.5 | 150 | 514 | 87 | 54.618 | 165.0 | 165.0 | 0.161 |
-| water | 1 | 300 | 386 | 88 | 43.169 | 165.0 | 165.0 | 0.164 |
-| water | 2 | 600 | 303 | 76 | 34.464 | 465.0 | 465.0 | 0.259 |
-| water | 4 | 1200 | 231 | 70 | 27.508 | 1065.0 | 1065.0 | 0.37 |
-| air | 0.5 | 90 | 569 | 141 | 4828.223 | 270.0 | 270.0 | 0.29 |
-| air | 1 | 180 | 362 | 134 | 3059.727 | 210.0 | 210.0 | 0.273 |
-| air | 2 | 360 | 251 | 130 | 2113.921 | 390.0 | 390.0 | 0.352 |
-| air | 4 | 720 | 191 | 121 | 1605.201 | 750.0 | 750.0 | 0.477 |
-| soil | 0.5 | 900 | 422 | 102 | 21.116 | 600.0 | 600.0 | 0.405 |
-| soil | 1 | 1800 | 336 | 92 | 17.995 | 600.0 | 600.0 | 0.471 |
-| soil | 2 | 3600 | 339 | 89 | 17.712 | 1500.0 | 1500.0 | 0.564 |
-| soil | 4 | 7200 | 256 | 74 | 13.95 | 5400.0 | 5400.0 | 0.854 |
+| water | 0.5 | 150 | 466 | 87 | 129.585 | 237.0 | 237.0 | 0.189 |
+| water | 1 | 300 | 334 | 83 | 94.95 | 372.0 | 372.0 | 0.228 |
+| water | 2 | 600 | 259 | 72 | 74.243 | 588.0 | 588.0 | 0.288 |
+| water | 4 | 1200 | 201 | 66 | 58.678 | 1146.0 | 1146.0 | 0.384 |
+| air | 0.5 | 90 | 435 | 130 | 4322.518 | 307.0 | 307.0 | 0.325 |
+| air | 1 | 180 | 303 | 124 | 3010.032 | 458.0 | 458.0 | 0.387 |
+| air | 2 | 360 | 212 | 111 | 2104.215 | 571.0 | 571.0 | 0.427 |
+| air | 4 | 720 | 168 | 110 | 1666.93 | 640.0 | 640.0 | 0.463 |
+| soil | 0.5 | 900 | 412 | 100 | 25.261 | 774.0 | 774.0 | 0.429 |
+| soil | 1 | 1800 | 328 | 90 | 21.271 | 698.0 | 698.0 | 0.479 |
+| soil | 2 | 3600 | 309 | 86 | 20.273 | 1286.0 | 1286.0 | 0.558 |
+| soil | 4 | 7200 | 253 | 76 | 16.828 | 5496.0 | 5496.0 | 0.835 |
 
 ## Packet-loss sweep (water / outage)
 
 | loss | strategy | tx_attempts | packets_delivered | data_lost_packets | recovered_after_outage | gateway_duplicates | energy_J | gateway_notify_delay_s |
 |---|---|---|---|---|---|---|---|---|
-| 0.0 | fixed | 915 | 701 | 19 | 128 | 0 | 142.682 | 5736.0 |
-| 0.0 | adaptive | 168 | 76 | 0 | 38 | 0 | 43.308 | 5886.0 |
-| 0.1 | fixed | 1071 | 701 | 19 | 142 | 71 | 155.731 | 5736.0 |
-| 0.1 | adaptive | 182 | 76 | 0 | 38 | 6 | 44.667 | 5886.0 |
-| 0.3 | fixed | 1660 | 701 | 19 | 304 | 308 | 204.997 | 5736.0 |
-| 0.3 | adaptive | 242 | 76 | 0 | 43 | 33 | 50.262 | 5892.0 |
+| 0.0 | fixed | 879 | 673 | 13 | 128 | 0 | 253.289 | 5799.0 |
+| 0.0 | adaptive | 145 | 73 | 0 | 35 | 0 | 85.53 | 5766.0 |
+| 0.1 | fixed | 1030 | 674 | 12 | 146 | 69 | 265.921 | 5736.0 |
+| 0.1 | adaptive | 158 | 73 | 0 | 35 | 5 | 86.817 | 5766.0 |
+| 0.3 | fixed | 1571 | 662 | 24 | 332 | 293 | 311.155 | 5871.0 |
+| 0.3 | adaptive | 218 | 73 | 0 | 40 | 32 | 92.377 | 6080.0 |
