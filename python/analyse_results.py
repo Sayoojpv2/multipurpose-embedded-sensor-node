@@ -168,7 +168,7 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol):
         "avg_current_mA": round(s["avg_current_ma"], 4),
         "battery_days_est": s["projected_battery_days"],
         "truth_crit_events": len(te),
-        "detected_events": len(matched),
+        "detected_events": len(matched_at),
         "missed_events": len(te) - len(matched),
         "false_alarm_episodes": false_eps,
         "false_alarm_rate": round(false_eps / len(ne), 3) if ne else 0.0,

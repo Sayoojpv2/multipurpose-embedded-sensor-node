@@ -25,7 +25,7 @@ int hal_uart_read(uint8_t port, uint8_t *d, size_t n, uint32_t timeout_ms)
     return vdev_uart_read(port, d, n);
 }
 
-uint32_t hal_timer_now_s(void) { return (uint32_t)((g_now_ms + 999u) / 1000u); }
+uint32_t hal_timer_now_s(void) { return (uint32_t)(g_now_ms / 1000u); }
 void hal_timer_set_wakeup(uint32_t t) { g_wakeup = t; }
 uint32_t hal_timer_get_wakeup(void) { return g_wakeup; }
 void hal_sim_set_time(uint32_t t) { g_now_ms = (uint64_t)t * 1000u; }
