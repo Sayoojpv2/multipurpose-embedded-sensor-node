@@ -12,6 +12,6 @@
 | MATLAB validation | done | C vs MATLAB max error ≤ 5.4e-6 |
 | Renode / ARM | done | STM32F407 image runs on `stm32f4_discovery` (CPU, memory, USART2 emulated; sensors and radio virtual). Results identical to native. |
 | Documentation | done | `docs/` |
-| GitHub publish | see final report | requires `gh auth login` |
+| GitHub publish | done | https://github.com/Sayoojpv2/multipurpose-embedded-sensor-node (public) |
 
 Note: the session folder path was longer than Windows MAX_PATH allows for the deepest output files, so the runs used a temporary `subst` drive. In a normal folder such as `C:\Users\<you>\Documents\...` this is not needed.
