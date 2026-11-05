@@ -1,0 +1,11 @@
+:name: Multipurpose sensor node on STM32F4 Discovery
+:description: Runs build/sensor_node_stm32f4.elf; USART2 output is written to $uart_log.
+
+using sysbus
+$elf?=@build/sensor_node_stm32f4.elf
+$uart_log?=@build/renode_uart.log
+
+mach create "sensor_node"
+machine LoadPlatformDescription @platforms/boards/stm32f4_discovery-kit.repl
+sysbus LoadELF $elf
+usart2 CreateFileBackend $uart_log true

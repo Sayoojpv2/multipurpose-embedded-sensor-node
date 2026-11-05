@@ -1,0 +1,41 @@
+{
+  "_comment": "Scenario + experiment configuration. Physical values are illustrative environmental conditions, thresholds come from the firmware profiles (sensor_node --dump-profile).",
+  "seed": 42,
+  "radio": {"loss": 0.02, "ack_loss": 0.02, "corrupt": 0.005, "sf": 9},
+  "strategies": ["fixed", "adaptive_tx", "adaptive"],
+  "scenarios": ["stable", "gradual", "sudden", "noisy", "sensor_failure", "missing", "outage", "recovery"],
+  "detection_tolerance_s": 600,
+  "profiles": {
+    "water": {
+      "duration_h": 12, "dt_s": 1,
+      "nominal": [7.4, 15.0, 450.0, 26.0],
+      "noise":   [0.03, 1.0, 5.0, 0.05],
+      "diurnal": [0.10, 2.0, 20.0, 1.5],
+      "event_channel": 0, "event_dir": -1, "sudden_dir": -1,
+      "fault_channel": 1, "missing_channel": 2
+    },
+    "air": {
+      "duration_h": 12, "dt_s": 1,
+      "nominal": [25.0, 600.0, 65.0, 28.0],
+      "noise":   [3.0, 15.0, 1.0, 0.1],
+      "diurnal": [8.0, 100.0, 10.0, 3.0],
+      "event_channel": 0, "event_dir": 1, "sudden_dir": 1,
+      "fault_channel": 1, "missing_channel": 2
+    },
+    "soil": {
+      "duration_h": 48, "dt_s": 10,
+      "nominal": [30.0, 24.0, 1200.0, 20000.0],
+      "noise":   [0.3, 0.05, 15.0, 300.0],
+      "diurnal": [1.0, 3.0, 30.0, 0.0],
+      "event_channel": 0, "event_dir": -1, "sudden_dir": 1,
+      "fault_channel": 1, "missing_channel": 2
+    }
+  },
+  "sweeps": {
+    "stable_interval_factor": [0.5, 1, 2, 4],
+    "stable_sweep_scenario": "sudden",
+    "loss": [0.0, 0.1, 0.3],
+    "loss_sweep_profile": "water",
+    "loss_sweep_scenario": "outage"
+  }
+}

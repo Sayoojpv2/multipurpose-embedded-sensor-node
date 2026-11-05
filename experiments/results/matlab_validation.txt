@@ -1,0 +1,4 @@
+MATLAB 26.1.0.3312084 (R2026a) Update 4 reference vs C firmware filters (600 samples)
+moving average (5)   max |C - MATLAB| = 5.44e-06  PASS
+FIR binomial (7)     max |C - MATLAB| = 8.59e-07  PASS
+Hampel (5, k=3)      max |C - MATLAB| = 2.39e-07  PASS

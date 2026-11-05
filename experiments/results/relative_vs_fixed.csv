@@ -1,0 +1,7 @@
+profile,strategy,tx_attempts_%,bytes_%,airtime_%,energy_%,samples_%
+water,adaptive_tx,-87.8,-86.9,-86.7,-43.4,0.0
+water,adaptive,-87.9,-87.0,-86.8,-63.1,-39.6
+air,adaptive_tx,-80.3,-79.8,-79.2,-0.8,0.0
+air,adaptive,-81.7,-81.1,-80.5,-42.0,-41.0
+soil,adaptive_tx,-77.6,-78.9,-77.5,-59.7,0.0
+soil,adaptive,-82.1,-82.8,-81.9,-71.9,-41.1

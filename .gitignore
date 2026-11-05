@@ -1,0 +1,19 @@
+# build outputs
+build/
+*.exe
+*.o
+*.elf
+*.map
+# regenerable experiment data (large)
+experiments/traces/
+experiments/results/runs/
+experiments/results/filter_input.csv
+experiments/results/filter_c_output.csv
+flash.bin
+out/
+# python / editors
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+*.asv

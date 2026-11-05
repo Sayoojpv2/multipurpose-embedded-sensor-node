@@ -1,0 +1,17 @@
+
+Multipurpose sensor node fw 1.0.0 on STM32F407 (Renode)
+profile water, embedded trace rows=2160 dt=5 s
+crc16("123456789")=0x29B1
+strategy fixed
+  samples=180 packets=180 tx_attempts=187 delivered=180 airtime_ms=53808.0 energy_mJ=32185.2 records=180 crc_fail_at_gw=1
+strategy adaptive
+  GW t=4549 seq=7 ALERT state=2 len=18 ch0=5.79
+  GW t=4665 seq=8 ALERT state=2 len=18 ch0=5.79
+  GW t=4785 seq=11 ALERT state=2 len=18 ch0=5.80
+  GW t=4905 seq=12 ALERT state=2 len=18 ch0=5.79
+  GW t=5025 seq=13 ALERT state=2 len=18 ch0=5.80
+  GW t=5145 seq=14 ALERT state=2 len=18 ch0=5.79
+  samples=102 packets=27 tx_attempts=30 delivered=27 airtime_ms=8919.0 energy_mJ=11887.8 records=102 crc_fail_at_gw=0
+DONE
+
+# sysbus.cpu ExecutedInstructions after the run: 0x0000000000A8E543 = 11068739
