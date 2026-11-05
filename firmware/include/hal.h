@@ -47,8 +47,10 @@ void hal_gpio_write(uint8_t pin, bool level);
 bool hal_gpio_read(uint8_t pin);
 void hal_sensor_power(uint8_t rail, bool on);
 
-/* Simulation-side control (implemented by hal_virtual.c). */
+/* Simulation-side clock control. Advancing this clock models elapsed sensor
+ * warm-up/conversion time; it does not delay the host or emulate MCU cycles. */
 void hal_sim_set_time(uint32_t t_s);
+void hal_sim_advance_time_ms(uint32_t milliseconds);
 
 /* Provided by the build target: native -> stdout, ARM -> USART register. */
 void target_console_write(const uint8_t *data, size_t len);

@@ -28,8 +28,8 @@ typedef struct {
 float lora_airtime_ms(const lora_cfg_t *c, uint16_t phy_len, bool crc_on);
 
 /* ---- radio driver (implemented by simulation/radio/radio_sim.c) ---- */
-/* One transmission attempt. Returns 1 if an ACK was received. */
-int radio_transmit(const uint8_t *buf, uint8_t len, uint32_t t_s);
+/* One transmission attempt on the shared millisecond timeline. */
+int radio_transmit(const uint8_t *buf, uint8_t len, uint64_t tx_start_ms, float airtime_ms);
 
 /* ---- link layer ---- */
 #define TXQ_CAP 128
@@ -65,6 +65,7 @@ typedef struct {
     uint16_t   count;
     bool       up;
     uint32_t   next_probe_t, backoff_s;
+    uint64_t   next_tx_ms;          /* serialized TX/ACK timeline */
     link_cfg_t cfg;
     lora_cfg_t lora;
     link_stats_t st;

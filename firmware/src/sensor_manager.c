@@ -49,7 +49,23 @@ uint8_t sensor_manager_sample(sensor_manager_t *sm, uint32_t now, sensor_reading
             switched |= (uint8_t)(1u << i);
         }
     }
-    /* 2. bus transactions */
+    /* 2. Wait for every sensor switched on during this wake-up. The shared
+     * virtual clock advances by the longest warm-up + conversion interval. */
+    float max_on_s = 0.0f;
+    for (int i = 0; i < p->n_channels; i++) {
+        if (switched & (1u << i)) {
+            float on_s = p->ch[i].pwr.warmup_s + p->ch[i].pwr.measure_s;
+            if (on_s > max_on_s) max_on_s = on_s;
+        }
+    }
+    if (max_on_s > 0.0f) {
+        double wait_ms = ceil((double)max_on_s * 1000.0);
+        if (wait_ms > 4294967295.0) wait_ms = 4294967295.0;
+        hal_sim_advance_time_ms((uint32_t)wait_ms);
+    }
+    now = hal_timer_now_s();
+
+    /* 3. bus transactions */
     for (int i = 0; i < p->n_channels; i++) {
         const sensor_channel_cfg_t *c = &p->ch[i];
         sensor_reading_t *r = &out[i];

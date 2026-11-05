@@ -6,6 +6,7 @@
 #include "comms.h"
 #include "../sensors/virtual_sensors.h"
 #include <string.h>
+#include <math.h>
 
 static radio_sim_cfg_t g_cfg = {0.0f, 0.0f, 0.0f, 1};
 static radio_sim_stats_t g_st;
@@ -21,10 +22,18 @@ void radio_sim_init(const radio_sim_cfg_t *c)
 
 const radio_sim_stats_t *radio_sim_stats(void) { return &g_st; }
 
-int radio_transmit(const uint8_t *buf, uint8_t len, uint32_t t)
+int radio_transmit(const uint8_t *buf, uint8_t len, uint64_t tx_start_ms, float airtime_ms)
 {
+    uint64_t tx_end_ms = tx_start_ms + (uint64_t)ceilf(airtime_ms);
+    uint32_t start_s = (uint32_t)(tx_start_ms / 1000u);
+    uint32_t end_s = (uint32_t)(tx_end_ms / 1000u);
     g_st.tx++;
-    if (!env_link_up(t)) { g_st.lost_outage++; return 0; }
+
+    /* Check each whole-second boundary crossed by the uplink. */
+    for (uint32_t t = start_s; t <= end_s; t++) {
+        if (!env_link_up(t)) { g_st.lost_outage++; return 0; }
+        if (t == UINT32_MAX) break;
+    }
     if (urand() < g_cfg.p_loss) { g_st.lost_channel++; return 0; }
     uint8_t rx[PKT_MAX_LEN];
     memcpy(rx, buf, len);
@@ -33,7 +42,7 @@ int radio_transmit(const uint8_t *buf, uint8_t len, uint32_t t)
         rx[bit / 8] ^= (uint8_t)(1u << (bit % 8));
         g_st.corrupted++;
     }
-    if (!gateway_receive(rx, len, t)) return 0;          /* CRC failure: no ACK */
+    if (!gateway_receive(rx, len, end_s)) return 0;       /* CRC failure: no ACK */
     if (urand() < g_cfg.p_ack_loss) { g_st.ack_lost++; return 0; }
     return 1;
 }

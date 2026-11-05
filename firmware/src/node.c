@@ -47,24 +47,32 @@ uint32_t node_step(node_t *n, uint32_t now)
     const app_profile_t *p = n->prof;
     const energy_cfg_t *ec = &n->cfg.energy;
     int nc = p->n_channels;
-    float dt = n->first ? 0.0f : (float)(now - n->last_sample_t);
     node_sample_log_t lg;
     memset(&lg, 0, sizeof lg);
-    lg.t = now;
 
     /* ---- acquisition ---- */
     uint8_t switched = sensor_manager_sample(&n->sm, now, lg.rd);
+    now = hal_timer_now_s();                 /* includes virtual sensor warm-up */
+    float dt = n->first ? 0.0f : (float)(now - n->last_sample_t);
+    lg.t = now;
 
-    /* ---- energy: sensors, idle wait, processing ---- */
+    /* ---- energy: sensors, warm-up/conversion, processing ----
+     * Newly enabled sensors stay powered until the slowest one is ready. */
+    float switched_on = 0.0f;
+    for (int i = 0; i < nc; i++)
+        if (switched & (1u << i)) {
+            float on = sensor_on_time(&p->ch[i]);
+            if (on > switched_on) switched_on = on;
+        }
+
     float idle = 0.0f;
     for (int i = 0; i < nc; i++) {
         const sensor_channel_cfg_t *c = &p->ch[i];
-        float on = sensor_on_time(c);
         if (switched & (1u << i)) {
-            float off = dt > on ? dt - on : 0.0f;
-            n->e.q_sensor += c->pwr.active_ma * on + c->pwr.off_ua / 1000.0f * off;
+            float off = dt > switched_on ? dt - switched_on : 0.0f;
+            n->e.q_sensor += c->pwr.active_ma * switched_on + c->pwr.off_ua / 1000.0f * off;
             n->e.q_switch += ec->sensor_switch_uc / 1000.0f;
-            if (on > idle) idle = on;
+            if (switched_on > idle) idle = switched_on;
         } else {
             n->e.q_sensor += c->pwr.active_ma * dt;           /* stayed powered */
             if (c->pwr.measure_s > idle) idle = c->pwr.measure_s;

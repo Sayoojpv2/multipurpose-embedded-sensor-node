@@ -376,6 +376,64 @@ static void test_packets_crc(void)
     lc.sf = 12; NEAR(lora_airtime_ms(&lc, 13, true), 1155.072, 0.01);
 }
 
+
+static void test_warmup_and_radio_timing(void)
+{
+    GROUP("sensor warm-up + serialized radio timeline");
+
+    trace_const(NOM_AIR);
+    vdev_load_board(PROFILE_AIR);
+    hal_sim_set_time(0);
+    sensor_manager_t sm;
+    sensor_reading_t rd[MAX_CHANNELS];
+    CHECK(sensor_manager_init(&sm, &PROFILE_AIR_CFG) == 4);
+    uint8_t switched = sensor_manager_sample(&sm, 0, rd);
+    CHECK((switched & 0x0Fu) == 0x0Fu);
+    CHECK(hal_timer_now_s() >= 31);
+    for (int i = 0; i < 4; i++) CHECK(rd[i].status == RD_OK);
+    uint32_t ready_t = hal_timer_now_s();
+    sensor_manager_sample(&sm, ready_t, rd);
+    CHECK(hal_timer_now_s() == ready_t);
+    sensor_manager_release(&sm, 0);
+
+    trace_const(NOM_WATER);
+    radio_sim_cfg_t rc = {0.0f, 0.0f, 0.0f, 1u};
+    radio_sim_init(&rc);
+    gateway_init(gw_cb, NULL);
+    link_t link;
+    link_cfg_t lc;
+    lora_cfg_t lo;
+    link_default_cfg(&lc);
+    lora_default_cfg(&lo);
+    lc.max_per_service = 2;
+    link_init(&link, &lc, &lo, 1u);
+
+    packet_t p;
+    memset(&p, 0, sizeof p);
+    p.type = PKT_DATA; p.node_id = 1; p.profile_id = PROFILE_WATER;
+    p.mask = 0x0Fu; p.priority = PRIO_NORMAL;
+    for (int i = 0; i < 4; i++) {
+        p.ch[i].sensor_id = (uint8_t)(i + 1);
+        p.ch[i].status = pkt_status_byte(EV_NORMAL, true, RD_OK);
+        p.ch[i].value = (float)(i + 1);
+    }
+    uint8_t buf[PKT_MAX_LEN];
+    p.seq = 1;
+    int len = packet_encode(&p, buf, sizeof buf);
+    CHECK(len > 0 && link_submit(&link, buf, (uint8_t)len, PRIO_NORMAL, 1, PKT_DATA, 100) == 0);
+    p.seq = 2;
+    len = packet_encode(&p, buf, sizeof buf);
+    CHECK(len > 0 && link_submit(&link, buf, (uint8_t)len, PRIO_NORMAL, 2, PKT_DATA, 100) == 0);
+
+    float uplink_ms = lora_airtime_ms(&lo, (uint16_t)(len + lo.mac_overhead), true);
+    float ack_ms = lora_airtime_ms(&lo, lc.ack_len, false);
+    uint64_t occupied_ms = (uint64_t)ceilf(uplink_ms + ack_ms);
+    link_service(&link, 100);
+    CHECK(link.st.delivered == 2);
+    CHECK(gateway_stats()->rx_ok == 2);
+    CHECK(link.next_tx_ms == 100000u + 2u * occupied_ms);
+}
+
 static void test_outage(void)
 {
     GROUP("communication outage + store-and-forward");
@@ -439,6 +497,7 @@ int main(void)
     test_events();
     test_sampling();
     test_packets_crc();
+    test_warmup_and_radio_timing();
     test_outage();
     test_fixed_vs_adaptive();
     test_reproducibility();

@@ -115,23 +115,38 @@ int link_submit(link_t *l, const uint8_t *buf, uint8_t len, uint8_t prio, uint16
     return 0;
 }
 
-/* One packet with bounded retries. */
+/* A packet occupies uplink airtime plus its ACK receive interval (or
+ * timeout). Retries add backoff; queued packets use one shared timeline. */
 static bool send_item(link_t *l, txq_item_t *it, uint32_t now)
 {
-    uint32_t t = now;
-    if (now - it->created_t >= l->cfg.stored_age_s) packet_set_flags(it->buf, it->len, PKT_FLAG_STORED);
+    uint64_t t_ms = (uint64_t)now * 1000u;
+    if (t_ms < l->next_tx_ms) t_ms = l->next_tx_ms;
+
     for (uint8_t a = 0; a <= l->cfg.max_retries; a++) {
+        uint32_t tx_s = (uint32_t)(t_ms / 1000u);
+        if (tx_s >= it->created_t && tx_s - it->created_t >= l->cfg.stored_age_s)
+            packet_set_flags(it->buf, it->len, PKT_FLAG_STORED);
+
         float air = lora_airtime_ms(&l->lora, (uint16_t)(it->len + l->lora.mac_overhead), true);
-        bool acked = radio_transmit(it->buf, it->len, t) == 1;
+        bool acked = radio_transmit(it->buf, it->len, t_ms, air) == 1;
+        float rx = acked ? lora_airtime_ms(&l->lora, l->cfg.ack_len, false) : l->cfg.rx_window_ms;
+
         l->st.attempts++;
         if (a > 0) l->st.retries++;
         l->st.bytes_air += it->len;
         l->st.airtime_ms += air;
-        l->st.rx_ms += acked ? lora_airtime_ms(&l->lora, l->cfg.ack_len, false) : l->cfg.rx_window_ms;
-        if (l->on_attempt) l->on_attempt(l->cb_ctx, t, it, a, air, acked);
-        if (acked) return true;
-        t += 2u + xorshift32(&l->rng) % 5u;   /* random backoff 2..6 s */
+        l->st.rx_ms += rx;
+        if (l->on_attempt) l->on_attempt(l->cb_ctx, tx_s, it, a, air, acked);
+
+        t_ms += (uint64_t)ceilf(air + rx);
+        if (acked) {
+            l->next_tx_ms = t_ms;
+            return true;
+        }
+        if (a < l->cfg.max_retries)
+            t_ms += (uint64_t)(2u + xorshift32(&l->rng) % 5u) * 1000u;
     }
+    l->next_tx_ms = t_ms;
     return false;
 }
 
@@ -161,7 +176,7 @@ void link_service(link_t *l, uint32_t now)
             for (int k = 0; k < l->count; k++)
                 if (l->q[k].prio == PRIO_CRITICAL && l->cfg.backoff_urgent_max_s < cap) cap = l->cfg.backoff_urgent_max_s;
             if (l->backoff_s > cap) l->backoff_s = cap;
-            l->next_probe_t = now + l->backoff_s;
+            l->next_probe_t = (uint32_t)((l->next_tx_ms + 999u) / 1000u) + l->backoff_s;
             l->backoff_s = (l->backoff_s * 2 > cap) ? cap : l->backoff_s * 2;
             return;
         }
