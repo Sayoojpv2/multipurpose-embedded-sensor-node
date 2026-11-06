@@ -4,7 +4,7 @@
  * RX 5.22 mA, sleep 1.69 uA typ. @ 3.3 V.
  *   https://docs.rakwireless.com/product-categories/wisduo/rak3172-module/datasheet/
  * MCU active/idle currents, processing times and sensor currents are
- * ASSUMPTIONS documented in docs/technical_report.md - change them here.
+ * ASSUMPTIONS (see docs/TECHNICAL_REPORT.md, section 1) - change them here.
  */
 #include "node.h"
 

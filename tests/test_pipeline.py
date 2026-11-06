@@ -10,6 +10,7 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "python"))
+import analyse_results  # noqa: E402
 import generate_data  # noqa: E402
 
 EXE = generate_data.EXE
@@ -100,6 +101,72 @@ class Pipeline(unittest.TestCase):
             with open(os.path.join(d, "summary.json")) as f:
                 s = json.load(f)
             self.assertEqual((s["profile"], s["strategy"], s["seed"]), ("soil", "fixed", 3))
+
+
+def run_raw(*args):
+    return subprocess.run([EXE, *args], capture_output=True, text=True)
+
+
+class InputValidation(unittest.TestCase):
+    """Malformed traces and out-of-range options must fail with a clear message."""
+
+    HEADER = "t,v0,v1,v2,v3,f0,f1,f2,f3,link\n"
+    ROW = "{t},7.4,15,450,26,0,0,0,0,1\n"
+
+    def run_trace(self, text):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "trace.csv")
+            with open(path, "w") as f:
+                f.write(text)
+            return run_raw("--profile", "water", "--trace", path, "--out", d)
+
+    def good_rows(self, n=5):
+        return "".join(self.ROW.format(t=10 * i) for i in range(n))
+
+    def test_valid_trace_runs(self):
+        self.assertEqual(self.run_trace(self.HEADER + self.good_rows()).returncode, 0)
+
+    def test_empty_value_is_a_missing_reading(self):
+        text = self.HEADER + self.good_rows(2) + "20,,15,450,26,0,0,0,0,1\n"
+        self.assertEqual(self.run_trace(text).returncode, 0)
+
+    def test_malformed_traces_rejected(self):
+        cases = {
+            "short row": self.HEADER + self.good_rows(2) + "20,7.4,15\n",
+            "text in number": self.HEADER + self.good_rows(2) + "20,abc,15,450,26,0,0,0,0,1\n",
+            "bad fault code": self.HEADER + self.good_rows(2) + "20,7.4,15,450,26,7,0,0,0,1\n",
+            "bad link": self.HEADER + self.good_rows(2) + "20,7.4,15,450,26,0,0,0,0,2\n",
+            "uneven time": self.HEADER + self.good_rows(2) + "25,7.4,15,450,26,0,0,0,0,1\n",
+            "no time column": "v0,v1\n1,2\n3,4\n",
+            "one row": self.HEADER + self.good_rows(1),
+            "empty file": "",
+        }
+        for name, text in cases.items():
+            with self.subTest(name):
+                r = self.run_trace(text)
+                self.assertEqual(r.returncode, 2, r.stdout)
+                self.assertTrue(r.stderr.strip(), "an error message is expected")
+
+    def test_option_ranges(self):
+        for opt, val in (("--loss", "1.5"), ("--corrupt", "-0.1"), ("--sf", "13"), ("--storage-cap", "0"),
+                         ("--node-id", "70000")):
+            with self.subTest(opt):
+                r = run_raw("--profile", "water", "--trace", TRACE, opt, val)
+                self.assertEqual(r.returncode, 2)
+
+
+class GatewayView(unittest.TestCase):
+    def test_live_view_uses_reception_time(self):
+        import numpy as np
+        ts = np.array([0.0, 100.0, 200.0])        # sample times
+        t_rx = np.array([0.0, 500.0, 210.0])      # packet 2 was delayed (store-and-forward)
+        v = np.array([1.0, 2.0, 3.0])
+        grid = np.array([50.0, 150.0, 220.0, 600.0])
+        live = analyse_results.gateway_view(grid, ts, t_rx, v, "live")
+        offline = analyse_results.gateway_view(grid, ts, t_rx, v, "offline")
+        # at 150 s the gateway has not received the t=100 sample yet
+        self.assertEqual(list(live), [1.0, 1.0, 3.0, 3.0])   # late, older sample never overwrites newer
+        self.assertEqual(list(offline), [1.0, 2.0, 3.0, 3.0])
 
 
 if __name__ == "__main__":

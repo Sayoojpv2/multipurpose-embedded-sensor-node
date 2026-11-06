@@ -372,6 +372,43 @@ static void test_packets_crc(void)
     packet_set_flags(buf, (size_t)n, PKT_FLAG_STORED);
     CHECK(packet_decode(buf, (size_t)n, &d) == 0 && (d.flags & PKT_FLAG_STORED));
 
+    /* encoder never writes past the buffer: every size below the required
+     * length is rejected and leaves the canary bytes untouched */
+    p.type = PKT_DATA; p.mask = 0x0F;
+    int need = packet_encoded_len(&p);
+    CHECK(need == PKT_HDR_LEN + 4 * 4 + PKT_CRC_LEN);
+    uint8_t guard[PKT_MAX_LEN + 8];
+    int rejected = 0, clean = 0;
+    for (int cap = 0; cap < need; cap++) {
+        memset(guard, 0xA5, sizeof guard);
+        if (packet_encode(&p, guard, (size_t)cap) == -1) rejected++;
+        int untouched = 1;
+        for (size_t k = 0; k < sizeof guard; k++) if (guard[k] != 0xA5) untouched = 0;
+        clean += untouched;
+    }
+    CHECK(rejected == need && clean == need);
+    memset(guard, 0xA5, sizeof guard);
+    CHECK(packet_encode(&p, guard, (size_t)need) == need && guard[need] == 0xA5);
+    p.mask = 0;                                         /* header-only packet still needs 14 bytes */
+    CHECK(packet_encode(&p, guard, PKT_HDR_LEN) == -1 && packet_encode(&p, guard, sizeof guard) == PKT_HDR_LEN + PKT_CRC_LEN);
+    p.mask = 0x10;                                      /* channel 4 does not exist in any profile */
+    CHECK(packet_encoded_len(&p) == -1 && packet_encode(&p, guard, sizeof guard) == -1);
+    p.mask = 0x0F; p.type = 9;                          /* unknown packet type */
+    CHECK(packet_encode(&p, guard, sizeof guard) == -1);
+    p.type = PKT_DATA; p.profile_id = 99;               /* unknown profile */
+    CHECK(packet_encode(&p, guard, sizeof guard) == -1);
+    p.profile_id = PROFILE_WATER;
+    /* decoder rejects a valid-CRC frame whose mask names a missing channel */
+    n = packet_encode(&p, buf, sizeof buf);
+    buf[11] |= 0x10;
+    uint16_t c16 = crc16_ccitt_false(buf, (size_t)n - 2);
+    buf[n - 2] = (uint8_t)c16; buf[n - 1] = (uint8_t)(c16 >> 8);
+    CHECK(packet_decode(buf, (size_t)n, &d) == -1);
+    CHECK(packet_decode(buf, 5, &d) == -1);
+    uint8_t tiny[4] = {1, 2, 3, 4};
+    packet_set_flags(tiny, sizeof tiny, PKT_FLAG_STORED); /* must not touch a too-short buffer */
+    CHECK(tiny[0] == 1 && tiny[3] == 4);
+
     lora_cfg_t lc; lora_default_cfg(&lc);
     lc.sf = 7;  NEAR(lora_airtime_ms(&lc, 13, true), 46.336, 0.01);
     lc.sf = 12; NEAR(lora_airtime_ms(&lc, 13, true), 1155.072, 0.01);

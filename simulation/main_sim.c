@@ -71,54 +71,131 @@ static int load_ini(opts_t *o, const char *path)
 /* ---------------- trace loading ---------------- */
 static env_trace_t g_trace;
 
+#define TRACE_MAX_COLS 64
+
+static void free_trace(void)
+{
+    for (int i = 0; i < MAX_CHANNELS; i++) { free((void *)g_trace.v[i]); free((void *)g_trace.fault[i]); }
+    free((void *)g_trace.link);
+    memset(&g_trace, 0, sizeof g_trace);
+}
+
+/* Split one CSV line into numbers. Empty fields become NaN. Returns the
+ * number of fields, or -1 if a field is not a number or there are too many. */
+static int parse_row(char *line, double *vals, int max)
+{
+    int n = 0;
+    char *p = line;
+    for (;;) {
+        if (n == max) return -1;
+        while (*p == ' ') p++;
+        if (*p == ',' || *p == '\0' || *p == '\r' || *p == '\n') {
+            vals[n++] = NAN;
+        } else {
+            char *e;
+            vals[n++] = strtod(p, &e);
+            if (e == p) return -1;
+            while (*e == ' ') e++;
+            if (*e != ',' && *e != '\0' && *e != '\r' && *e != '\n') return -1;
+            p = e;
+        }
+        p = strchr(p, ',');
+        if (!p) return n;
+        p++;
+    }
+}
+
+static bool is_code(double x, int max) { return x == x && x >= 0 && x <= max && x == (int)x; }
+
+/* Loads a trace CSV (t, v0..v3, f0..f3, link, other columns ignored).
+ * Requirements: a t column with a constant positive integer step, at least
+ * one v column, every row with the same number of fields as the header,
+ * fault codes 0/1/2 and link 0/1. An empty value is treated as a missing
+ * reading (fault 1). Any violation is reported with its line number. */
 static int load_trace(const char *path)
 {
     FILE *f = fopen(path, "r");
     if (!f) { fprintf(stderr, "cannot open trace %s\n", path); return -1; }
     char line[2048];
-    if (!fgets(line, sizeof line, f)) { fclose(f); return -1; }
-    int col_t = -1, col_v[MAX_CHANNELS], col_f[MAX_CHANNELS], col_link = -1, ncol = 0;
+    long ln = 1;
+    int col_t = -1, col_v[MAX_CHANNELS], col_f[MAX_CHANNELS], col_link = -1, ncol = 0, nv = 0;
     for (int i = 0; i < MAX_CHANNELS; i++) col_v[i] = col_f[i] = -1;
+    if (!fgets(line, sizeof line, f)) { fprintf(stderr, "%s: empty file\n", path); fclose(f); return -1; }
     for (char *tok = strtok(line, ",\r\n"); tok; tok = strtok(NULL, ",\r\n"), ncol++) {
+        if (ncol >= TRACE_MAX_COLS) { fprintf(stderr, "%s: more than %d columns\n", path, TRACE_MAX_COLS); fclose(f); return -1; }
         if (!strcmp(tok, "t")) col_t = ncol;
         else if (!strcmp(tok, "link")) col_link = ncol;
-        else if (tok[0] == 'v' && tok[1] >= '0' && tok[1] < '0' + MAX_CHANNELS && !tok[2]) col_v[tok[1] - '0'] = ncol;
+        else if (tok[0] == 'v' && tok[1] >= '0' && tok[1] < '0' + MAX_CHANNELS && !tok[2]) { col_v[tok[1] - '0'] = ncol; nv++; }
         else if (tok[0] == 'f' && tok[1] >= '0' && tok[1] < '0' + MAX_CHANNELS && !tok[2]) col_f[tok[1] - '0'] = ncol;
     }
+    if (col_t < 0 || nv == 0) { fprintf(stderr, "%s: header needs a 't' column and at least one 'vN' column\n", path); fclose(f); return -1; }
+
     size_t cap = 1024, n = 0;
-    float *v[MAX_CHANNELS]; uint8_t *fl[MAX_CHANNELS]; uint8_t *lk = malloc(cap);
-    double t0 = 0, t1 = 1;
-    for (int i = 0; i < MAX_CHANNELS; i++) { v[i] = malloc(cap * sizeof(float)); fl[i] = malloc(cap); }
-    double vals[64];
-    while (fgets(line, sizeof line, f)) {
-        int c = 0;
-        char *p = line;
-        while (c < 64) {
-            char *e; vals[c] = strtod(p, &e);
-            if (e == p) vals[c] = NAN;
-            c++;
-            p = strchr(e, ','); if (!p) break; p++;
-        }
+    float *v[MAX_CHANNELS]; uint8_t *fl[MAX_CHANNELS]; uint8_t *lk;
+    memset(&g_trace, 0, sizeof g_trace);
+    double t0 = 0, dt = 0, vals[TRACE_MAX_COLS];
+    const char *err = NULL;
+
+    lk = malloc(cap);
+    bool ok = lk != NULL;
+    for (int i = 0; i < MAX_CHANNELS; i++) {
+        v[i] = malloc(cap * sizeof(float)); fl[i] = malloc(cap);
+        ok = ok && v[i] && fl[i];
+    }
+    if (!ok) err = "out of memory";
+
+    while (!err && fgets(line, sizeof line, f)) {
+        ln++;
+        size_t len = strlen(line);
+        if (len == sizeof line - 1 && line[len - 1] != '\n' && !feof(f)) { err = "line too long"; break; }
+        if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0') continue;     /* blank line */
+        int c = parse_row(line, vals, TRACE_MAX_COLS);
+        if (c < 0) { err = "non-numeric field"; break; }
+        if (c != ncol) { err = "row has a different number of fields than the header"; break; }
         if (n == cap) {
-            cap *= 2; lk = realloc(lk, cap);
-            for (int i = 0; i < MAX_CHANNELS; i++) { v[i] = realloc(v[i], cap * sizeof(float)); fl[i] = realloc(fl[i], cap); }
+            cap *= 2;
+            void *q = realloc(lk, cap); if (!q) { err = "out of memory"; break; } lk = q;
+            for (int i = 0; i < MAX_CHANNELS && !err; i++) {
+                q = realloc(v[i], cap * sizeof(float)); if (!q) { err = "out of memory"; break; } v[i] = q;
+                q = realloc(fl[i], cap); if (!q) { err = "out of memory"; break; } fl[i] = q;
+            }
+            if (err) break;
         }
-        if (n == 0) t0 = col_t >= 0 ? vals[col_t] : 0;
-        if (n == 1) t1 = col_t >= 0 ? vals[col_t] : 1;
+        double t = vals[col_t];
+        if (t != t) { err = "missing time value"; break; }
+        if (n == 0) t0 = t;
+        else if (n == 1) {
+            dt = t - t0;
+            if (dt < 1 || dt != (double)(long)dt) { err = "time step must be a positive whole number of seconds"; break; }
+        } else if (fabs(t - (t0 + (double)n * dt)) > 1e-6) { err = "time column is not evenly spaced"; break; }
         for (int i = 0; i < MAX_CHANNELS; i++) {
-            v[i][n] = col_v[i] >= 0 ? (float)vals[col_v[i]] : NAN;
-            fl[i][n] = col_f[i] >= 0 ? (uint8_t)vals[col_f[i]] : 0;
-            if (col_v[i] < 0) fl[i][n] = 1;
+            double x = col_v[i] >= 0 ? vals[col_v[i]] : NAN;
+            double fc = col_f[i] >= 0 ? vals[col_f[i]] : 0.0;
+            if (fc != fc) fc = 0.0;
+            if (!is_code(fc, 2)) { err = "fault code must be 0, 1 or 2"; break; }
+            v[i][n] = (float)x;
+            fl[i][n] = (uint8_t)fc;
+            if (x != x && fl[i][n] == 0) fl[i][n] = 1;     /* no value -> missing reading */
         }
-        lk[n] = col_link >= 0 ? (uint8_t)vals[col_link] : 1;
+        if (err) break;
+        double lkv = col_link >= 0 ? vals[col_link] : 1.0;
+        if (lkv != lkv) lkv = 1.0;
+        if (!is_code(lkv, 1)) { err = "link must be 0 or 1"; break; }
+        lk[n] = (uint8_t)lkv;
         n++;
     }
     fclose(f);
-    g_trace.n_rows = (uint32_t)n;
-    g_trace.dt_s = (uint32_t)((t1 - t0) > 0 ? lrint(t1 - t0) : 1);
     for (int i = 0; i < MAX_CHANNELS; i++) { g_trace.v[i] = v[i]; g_trace.fault[i] = fl[i]; }
     g_trace.link = lk;
-    return n > 1 ? 0 : -1;
+    if (!err && n < 2) err = "need at least two data rows";
+    if (err) {
+        fprintf(stderr, "%s:%ld: %s\n", path, ln, err);
+        free_trace();
+        return -1;
+    }
+    g_trace.n_rows = (uint32_t)n;
+    g_trace.dt_s = (uint32_t)dt;
+    return 0;
 }
 
 /* ---------------- file-backed flash emulation ---------------- */
@@ -249,6 +326,12 @@ int main(int argc, char **argv)
         fprintf(stderr, "bad argument %s\n", argv[i]); return 2;
     }
     if (o.ack_loss < 0) o.ack_loss = o.loss;
+    if (!(o.loss >= 0 && o.loss <= 1) || !(o.ack_loss >= 0 && o.ack_loss <= 1) || !(o.corrupt >= 0 && o.corrupt <= 1)) {
+        fprintf(stderr, "loss, ack-loss and corrupt must be probabilities in [0, 1]\n"); return 2;
+    }
+    if (o.sf < 7 || o.sf > 12) { fprintf(stderr, "sf must be 7..12\n"); return 2; }
+    if (o.node_id > 0xFFFFu) { fprintf(stderr, "node-id must fit in 16 bits\n"); return 2; }
+    if (o.storage_cap < 1 || o.storage_cap > 1000000u) { fprintf(stderr, "storage-cap must be 1..1000000 records\n"); return 2; }
 
     const app_profile_t *prof = profile_find(o.profile);
     if (!prof) { fprintf(stderr, "unknown profile '%s' (water|air|soil)\n", o.profile); return 2; }

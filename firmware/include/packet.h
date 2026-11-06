@@ -41,7 +41,8 @@ typedef struct {
     pkt_channel_t ch[MAX_CHANNELS];   /* indexed by channel number */
 } packet_t;
 
-int  packet_encode(const packet_t *p, uint8_t *buf, size_t cap);   /* returns length or -1 */
+int  packet_encoded_len(const packet_t *p);                         /* bytes needed, -1 if invalid */
+int  packet_encode(const packet_t *p, uint8_t *buf, size_t cap);   /* length, or -1 (buffer untouched) */
 int  packet_decode(const uint8_t *buf, size_t len, packet_t *p);   /* 0 ok, -1 length, -2 CRC, -3 profile */
 void packet_set_flags(uint8_t *buf, size_t len, uint8_t flags);    /* patch flags + recompute CRC */
 uint8_t pkt_status_byte(uint8_t state, bool valid, uint8_t rd_status);

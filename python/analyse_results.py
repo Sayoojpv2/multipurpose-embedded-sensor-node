@@ -72,6 +72,37 @@ def critical_mask(trace, prof):
     return crit
 
 
+def gateway_view(t_grid, ts, t_rx, values, view="live"):
+    """Value shown at the gateway for each time in t_grid (NaN before any data).
+
+    live:    only packets already received (t_rx <= t) count, and the packet
+             with the newest sample time wins, so a late store-and-forward
+             packet does not overwrite newer data.
+    offline: every packet is placed at its sample time ts, i.e. the picture
+             available once all queued data has arrived.
+    """
+    ok = ~np.isnan(values)
+    ts, t_rx, values = ts[ok], t_rx[ok], values[ok]
+    out = np.full(len(t_grid), np.nan)
+    if len(values) == 0:
+        return out
+    if view == "offline":
+        order = np.argsort(ts, kind="stable")
+        key, shown = ts[order], values[order]
+    else:
+        order = np.lexsort((ts, t_rx))           # by reception time, then sample time
+        key, newest_ts, shown = t_rx[order], -np.inf, values[order].copy()
+        cur = np.nan
+        for k, j in enumerate(order):
+            if ts[j] >= newest_ts:
+                newest_ts, cur = ts[j], values[j]
+            shown[k] = cur
+    idx = np.searchsorted(key, t_grid, side="right") - 1
+    has = idx >= 0
+    out[has] = shown[idx[has]]
+    return out
+
+
 def analyse_run(run_dir, trace, prof, cfg_p, tol, event_merge):
     with open(os.path.join(run_dir, "summary.json")) as f:
         s = json.load(f)
@@ -123,25 +154,19 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol, event_merge):
                 d = gw["t_rx"][m].min() - ta
                 (gw_delays if d >= 0 else gw_early_leads).append(abs(d))
 
-    # gateway reconstruction error (sample-and-hold), in units of delta_report
-    nrmse = []
-    order = np.argsort(gts) if len(gts) else []
+    # Gateway reconstruction error in units of delta_report: live (what the
+    # gateway could show at each moment) and offline (after all data arrived).
+    recon_live, recon_off = [], []
     for i, ch in enumerate(prof["channels"]):
+        valid = trace[f"f{i}"] == 0
         if len(gts) == 0:
-            nrmse.append(np.nan)
+            recon_live.append(np.nan); recon_off.append(np.nan)
             continue
-        ts = gts[order]
-        v = gw[f"v{i}"][order]
-        ok = ~np.isnan(v)
-        ts, v = ts[ok], v[ok]
-        if len(ts) == 0:
-            nrmse.append(np.nan)
-            continue
-        idx = np.searchsorted(ts, tt, side="right") - 1
-        valid = (idx >= 0) & (trace[f"f{i}"] == 0)
-        rec = v[np.clip(idx, 0, None)]
-        err = rec[valid] - trace[f"tv{i}"][valid]
-        nrmse.append(float(np.sqrt(np.mean(err ** 2)) / ch["delta_report"]))
+        for out, view in ((recon_live, "live"), (recon_off, "offline")):
+            rec = gateway_view(tt, gts, gw["t_rx"], gw[f"v{i}"], view)
+            m = valid & ~np.isnan(rec)
+            err = rec[m] - trace[f"tv{i}"][m]
+            out.append(float(np.sqrt(np.mean(err ** 2)) / ch["delta_report"]) if m.any() else np.nan)
 
     # sensor-fault detection: truth = fault flag on a channel for >= 3 consecutive trace rows
     fault_truth, fault_det, fault_delay = 0, 0, []
@@ -196,8 +221,9 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol, event_merge):
         "max_queue": s["max_queue"],
         "gateway_duplicates": s["gateway_duplicates"],
         "gateway_crc_fail": s["gateway_crc_fail"],
-        "recon_err_event_ch": round(nrmse[cfg_p["event_channel"]], 3),
-        "recon_err_mean": round(float(np.nanmean(nrmse)), 3),
+        "recon_err_event_ch": round(recon_live[cfg_p["event_channel"]], 3),
+        "recon_err_mean": round(float(np.nanmean(recon_live)), 3),
+        "recon_err_offline_mean": round(float(np.nanmean(recon_off)), 3),
         "dsp_mac_ops": s["dsp_mac_ops"],
         "host_us_per_sample": s["host_us_per_sample"],
     }
@@ -206,7 +232,7 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol, event_merge):
 def write_rows(path, rows):
     keys = list(rows[0].keys())
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=keys)
+        w = csv.DictWriter(f, fieldnames=keys, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
 
@@ -280,7 +306,8 @@ def main():
                         "faults_detected": f"{tot('faults_detected')}/{tot('fault_episodes')}",
                         "node_delay_s": mean("node_detect_delay_s"), "gw_delay_s": mean("gateway_notify_delay_s"),
                         "lost_pkts": tot("data_lost_packets"), "recovered": tot("recovered_after_outage"),
-                        "recon_err": round(float(np.nanmean([r["recon_err_mean"] for r in sel])), 2)})
+                        "recon_err": round(float(np.nanmean([r["recon_err_mean"] for r in sel])), 2),
+                        "recon_err_offline": round(float(np.nanmean([r["recon_err_offline_mean"] for r in sel])), 2)})
     write_rows(os.path.join(RES, "aggregate.csv"), agg)
 
     # ---- relative change vs fixed ----
@@ -295,9 +322,8 @@ def main():
                         "airtime_%": round(100 * (a["airtime_s"] / f["airtime_s"] - 1), 1),
                         "energy_%": round(100 * (a["energy_J"] / f["energy_J"] - 1), 1),
                         "samples_%": round(100 * (a["samples"] / f["samples"] - 1), 1)})
-    write_rows(os.path.join(RES, "relative_vs_fixed.csv"), rel)
 
-    with open(os.path.join(RES, "results_summary.md"), "w") as f:
+    with open(os.path.join(RES, "results_summary.md"), "w", newline="\n") as f:
         f.write("# Experiment results\n\n")
         f.write("Generated by `python/analyse_results.py` from the native simulation. Traces are synthetic, "
                 f"generated with one fixed seed ({cfg['seed']}); see `seed_study.md` for a multi-seed check of the "
@@ -305,6 +331,7 @@ def main():
         f.write("Totals and means are aggregated over all 8 scenarios of each profile. A true *event* merges "
                 f"critical-limit crossings closer than {merge} s; *crossings* counts every excursion separately. "
                 f"Detection tolerance: {tol} s.\n\n")
+        f.write("`recon_err` is the RMS difference between what the gateway could display at each moment (packets already received) and the noise-free truth, in units of the channel's `delta_report`; `recon_err_offline` uses every packet at its sample time, i.e. after queued data has arrived.\n\n")
         f.write("## Traffic and estimated energy (8 scenarios per profile)\n\n")
         f.write(md_table(agg, ["profile", "strategy", "samples", "tx_attempts", "bytes_phy", "airtime_s",
                                "energy_J", "e_sensor_J", "e_radio_J", "e_mcu_J"]))
@@ -313,13 +340,13 @@ def main():
         f.write("\n## Detection and delivery (8 scenarios per profile)\n\n")
         f.write(md_table(agg, ["profile", "strategy", "events_detected", "crossings", "alarm_coverage_pct",
                                "false_alarms", "faults_detected", "node_delay_s", "gw_delay_s", "lost_pkts",
-                               "recovered", "recon_err"]))
+                               "recovered", "recon_err", "recon_err_offline"]))
         f.write("\n## Per-scenario detail\n\n")
         cols = ["profile", "scenario", "strategy", "samples", "tx_attempts", "energy_J", "truth_crossings",
                 "truth_crit_events", "detected_events", "alarm_coverage_pct", "false_alarm_episodes",
                 "node_detect_delay_s", "node_early_warning_s", "gateway_notify_delay_s",
                 "faults_detected", "fault_detect_delay_s", "data_lost_packets", "recovered_after_outage",
-                "recon_err_mean"]
+                "recon_err_mean", "recon_err_offline_mean"]
         f.write(md_table(rows, cols))
         f.write("\n## Stable-interval sweep (adaptive, scenario '%s')\n\n" % sw["stable_sweep_scenario"])
         f.write(md_table(srows, ["profile", "factor", "stable_s", "samples", "tx_attempts", "energy_J",
@@ -327,7 +354,7 @@ def main():
         f.write("\n## Packet-loss sweep (%s / %s)\n\n" % (lp, ls))
         f.write(md_table(lrows, ["loss", "strategy", "tx_attempts", "packets_delivered", "data_lost_packets",
                                  "recovered_after_outage", "gateway_duplicates", "energy_J", "gateway_notify_delay_s"]))
-    print("wrote metrics.csv, aggregate.csv, relative_vs_fixed.csv, sweep_*.csv, results_summary.md")
+    print("wrote metrics.csv, aggregate.csv, sweep_*.csv, results_summary.md")
 
 
 if __name__ == "__main__":

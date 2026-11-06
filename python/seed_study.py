@@ -74,7 +74,7 @@ def main():
                           "false_alarms": sum(r["false_alarm_episodes"] for r in sel),
                           "node_delay_s": stat(sel, "node_detect_delay_s"),
                           "gw_delay_s": stat(sel, "gateway_notify_delay_s")})
-    with open(os.path.join(RES, "seed_study.md"), "w", encoding="utf-8") as f:
+    with open(os.path.join(RES, "seed_study.md"), "w", encoding="utf-8", newline="\n") as f:
         f.write(f"# Seed study: {profile} profile, {st_cfg['seeds']} seeds\n\n")
         f.write("Each seed changes the trace noise/spikes/missing readings and the radio loss pattern. "
                 "Values are mean ± sample standard deviation over seeds; event counts are totals. "

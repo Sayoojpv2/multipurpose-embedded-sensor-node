@@ -54,7 +54,7 @@ typedef struct {
     float    last_reported[MAX_CHANNELS];
     bool     has_reported[MAX_CHANNELS];
     float    sum[MAX_CHANNELS], mn[MAX_CHANNELS], mx[MAX_CHANNELS];
-    uint16_t cnt[MAX_CHANNELS];
+    uint32_t cnt[MAX_CHANNELS];   /* samples since last summary (16 bits could wrap in long alerts) */
     uint8_t  last_node_state, last_ch_state[MAX_CHANNELS];
     bool     started;
     uint32_t suppressed;   /* samples that produced no transmission */
