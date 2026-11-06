@@ -225,7 +225,8 @@ def analyse_run(run_dir, trace, prof, cfg_p, tol, event_merge):
         "recon_err_mean": round(float(np.nanmean(recon_live)), 3),
         "recon_err_offline_mean": round(float(np.nanmean(recon_off)), 3),
         "dsp_mac_ops": s["dsp_mac_ops"],
-        "host_us_per_sample": s["host_us_per_sample"],
+        # host_us_per_sample (summary.json) is wall-clock time on the PC; it is
+        # left out of the committed tables because it changes on every run.
     }
 
 
