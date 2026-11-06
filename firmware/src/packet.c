@@ -35,6 +35,7 @@ const char *pkt_type_name(uint8_t t)
  * (unknown profile/type, or a channel bit beyond the profile's channels). */
 int packet_encoded_len(const packet_t *p)
 {
+    if (p == NULL) return -1;
     const app_profile_t *prof = profile_get(p->profile_id);
     if (!prof || p->type < PKT_DATA || p->type > PKT_FAULT) return -1;
     if (p->mask & ~((1u << prof->n_channels) - 1u)) return -1;
@@ -47,8 +48,9 @@ int packet_encoded_len(const packet_t *p)
 
 int packet_encode(const packet_t *p, uint8_t *buf, size_t cap)
 {
+    if (p == NULL || buf == NULL) return -1;
     int total = packet_encoded_len(p);
-    if (total < 0 || buf == NULL || (size_t)total > cap) return -1;   /* nothing written */
+    if (total < 0 || (size_t)total > cap) return -1;                  /* nothing written */
     const app_profile_t *prof = profile_get(p->profile_id);
     size_t n = PKT_HDR_LEN;
     buf[0] = (uint8_t)(PKT_VERSION << 4 | (p->type & 15u));
@@ -76,6 +78,7 @@ int packet_encode(const packet_t *p, uint8_t *buf, size_t cap)
 
 int packet_decode(const uint8_t *buf, size_t len, packet_t *p)
 {
+    if (buf == NULL || p == NULL) return -1;
     if (len < PKT_HDR_LEN + PKT_CRC_LEN) return -1;
     if (crc16_ccitt_false(buf, len - 2) != get16(&buf[len - 2])) return -2;
     if ((buf[0] >> 4) != PKT_VERSION) return -1;
@@ -115,7 +118,7 @@ int packet_decode(const uint8_t *buf, size_t len, packet_t *p)
 
 void packet_set_flags(uint8_t *buf, size_t len, uint8_t flags)
 {
-    if (len < PKT_HDR_LEN + PKT_CRC_LEN) return;
+    if (buf == NULL || len < PKT_HDR_LEN + PKT_CRC_LEN) return;
     buf[10] = (uint8_t)((buf[10] & ~7u) | (flags & 7u));
     put16(&buf[len - 2], crc16_ccitt_false(buf, len - 2));
 }

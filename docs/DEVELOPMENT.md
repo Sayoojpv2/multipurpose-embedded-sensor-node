@@ -39,10 +39,10 @@ Out-of-range values are rejected.
 
 **Trace format.** The trace is a CSV with columns `t, v0..v3, f0..f3, link`; extra columns are ignored.
 
-- `t` must have a constant whole-second step.
+- `t` must start at 0, have a constant whole-second step, and stay below 2^31 s.
 - `f` is the fault code: 0 ok, 1 missing, 2 stuck.
 - `link` is 1 when the radio link is up.
-- An empty value counts as a missing reading.
+- An empty value counts as a missing reading; `inf`/`nan` are rejected.
 
 Malformed rows are rejected with the line number.
 

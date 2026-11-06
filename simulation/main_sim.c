@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <time.h>
 
 void target_console_write(const uint8_t *d, size_t n) { fwrite(d, 1, n, stdout); }
@@ -72,6 +73,9 @@ static int load_ini(opts_t *o, const char *path)
 static env_trace_t g_trace;
 
 #define TRACE_MAX_COLS 64
+/* Upper limit for any trace time (and the trace duration). Times are held in
+ * uint32_t; staying below 2^31 s leaves room for t + interval in node_step(). */
+#define TRACE_MAX_TIME_S 2147483647.0
 
 static void free_trace(void)
 {
@@ -80,8 +84,9 @@ static void free_trace(void)
     memset(&g_trace, 0, sizeof g_trace);
 }
 
-/* Split one CSV line into numbers. Empty fields become NaN. Returns the
- * number of fields, or -1 if a field is not a number or there are too many. */
+/* Split one CSV line into numbers. Empty fields become NaN (missing value).
+ * Returns the number of fields, -1 if a field is not a number or there are
+ * too many fields, or -2 if a field is an explicit inf/nan. */
 static int parse_row(char *line, double *vals, int max)
 {
     int n = 0;
@@ -95,6 +100,7 @@ static int parse_row(char *line, double *vals, int max)
             char *e;
             vals[n++] = strtod(p, &e);
             if (e == p) return -1;
+            if (!isfinite(vals[n - 1])) return -2;
             while (*e == ' ') e++;
             if (*e != ',' && *e != '\0' && *e != '\r' && *e != '\n') return -1;
             p = e;
@@ -108,10 +114,11 @@ static int parse_row(char *line, double *vals, int max)
 static bool is_code(double x, int max) { return x == x && x >= 0 && x <= max && x == (int)x; }
 
 /* Loads a trace CSV (t, v0..v3, f0..f3, link, other columns ignored).
- * Requirements: a t column with a constant positive integer step, at least
- * one v column, every row with the same number of fields as the header,
- * fault codes 0/1/2 and link 0/1. An empty value is treated as a missing
- * reading (fault 1). Any violation is reported with its line number. */
+ * Requirements: a t column starting at 0 with a constant positive integer
+ * step (all times below 2^31 s), at least one v column, every row with the
+ * same number of fields as the header, fault codes 0/1/2 and link 0/1.
+ * Fields must be finite numbers; an empty sensor value is a missing reading
+ * (fault 1). Any violation is reported with its line number. */
 static int load_trace(const char *path)
 {
     FILE *f = fopen(path, "r");
@@ -150,6 +157,7 @@ static int load_trace(const char *path)
         if (len == sizeof line - 1 && line[len - 1] != '\n' && !feof(f)) { err = "line too long"; break; }
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0') continue;     /* blank line */
         int c = parse_row(line, vals, TRACE_MAX_COLS);
+        if (c == -2) { err = "inf/nan is not allowed (leave the field empty for a missing reading)"; break; }
         if (c < 0) { err = "non-numeric field"; break; }
         if (c != ncol) { err = "row has a different number of fields than the header"; break; }
         if (n == cap) {
@@ -163,16 +171,22 @@ static int load_trace(const char *path)
         }
         double t = vals[col_t];
         if (t != t) { err = "missing time value"; break; }
-        if (n == 0) t0 = t;
-        else if (n == 1) {
-            dt = t - t0;
-            if (dt < 1 || dt != (double)(long)dt) { err = "time step must be a positive whole number of seconds"; break; }
-        } else if (fabs(t - (t0 + (double)n * dt)) > 1e-6) { err = "time column is not evenly spaced"; break; }
+        if (t < 0 || t > TRACE_MAX_TIME_S || floor(t) != t) {
+            err = "time must be a whole number of seconds from 0 to 2147483647"; break;
+        }
+        if (n == 0) {
+            t0 = t;
+            if (t0 != 0) { err = "first time value must be 0 (the simulation starts at t = 0)"; break; }
+        } else if (n == 1) {
+            dt = t - t0;                                   /* whole and in range: t is checked above */
+            if (dt < 1) { err = "time step must be a positive whole number of seconds"; break; }
+        } else if (t != t0 + (double)n * dt) { err = "time column is not evenly spaced"; break; }
         for (int i = 0; i < MAX_CHANNELS; i++) {
             double x = col_v[i] >= 0 ? vals[col_v[i]] : NAN;
             double fc = col_f[i] >= 0 ? vals[col_f[i]] : 0.0;
             if (fc != fc) fc = 0.0;
             if (!is_code(fc, 2)) { err = "fault code must be 0, 1 or 2"; break; }
+            if (x == x && fabs(x) > FLT_MAX) { err = "sensor value outside the float range"; break; }
             v[i][n] = (float)x;
             fl[i][n] = (uint8_t)fc;
             if (x != x && fl[i][n] == 0) fl[i][n] = 1;     /* no value -> missing reading */
@@ -188,6 +202,7 @@ static int load_trace(const char *path)
     for (int i = 0; i < MAX_CHANNELS; i++) { g_trace.v[i] = v[i]; g_trace.fault[i] = fl[i]; }
     g_trace.link = lk;
     if (!err && n < 2) err = "need at least two data rows";
+    if (!err && (double)n * dt > TRACE_MAX_TIME_S) err = "trace duration exceeds 2147483647 s";
     if (err) {
         fprintf(stderr, "%s:%ld: %s\n", path, ln, err);
         free_trace();

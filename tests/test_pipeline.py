@@ -147,6 +147,37 @@ class InputValidation(unittest.TestCase):
                 self.assertEqual(r.returncode, 2, r.stdout)
                 self.assertTrue(r.stderr.strip(), "an error message is expected")
 
+    def row(self, t, v0="7.4", v3="26"):
+        return f"{t},{v0},15,450,{v3},0,0,0,0,1\n"
+
+    def test_non_finite_and_out_of_range_rejected(self):
+        h, ok = self.HEADER, self.row(0) + self.row(10)
+        cases = {
+            "inf timestamp": h + ok + self.row("inf"),
+            "-inf timestamp": h + ok + self.row("-inf"),
+            "nan timestamp": h + ok + self.row("nan"),
+            "inf sensor value": h + ok + self.row(20, v0="inf"),
+            "-inf sensor value": h + ok + self.row(20, v0="-inf"),
+            "nan sensor value": h + ok + self.row(20, v0="nan"),
+            "value beyond float range": h + ok + self.row(20, v0="1e300"),
+            "huge timestamp": h + ok + self.row(10000000000000),
+            "step beyond uint32 range": h + self.row(0) + self.row(5000000000),
+            "duration beyond range": h + self.row(0) + self.row(2147483647),
+            "fractional step": h + self.row(0) + self.row(0.5),
+            "first time not zero": h + self.row(100) + self.row(110),
+            "negative time": h + self.row(-10) + self.row(0),
+        }
+        for name, text in cases.items():
+            with self.subTest(name):
+                r = self.run_trace(text)
+                self.assertEqual(r.returncode, 2, r.stdout)
+                self.assertRegex(r.stderr, r"trace\.csv:[0-9]+: ", "error should name the line")
+
+    def test_negative_reading_and_empty_field_still_accepted(self):
+        text = self.HEADER + self.row(0) + self.row(10, v3="-5.5") + self.row(20, v0="")
+        r = self.run_trace(text)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
     def test_option_ranges(self):
         for opt, val in (("--loss", "1.5"), ("--corrupt", "-0.1"), ("--sf", "13"), ("--storage-cap", "0"),
                          ("--node-id", "70000")):

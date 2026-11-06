@@ -409,6 +409,25 @@ static void test_packets_crc(void)
     packet_set_flags(tiny, sizeof tiny, PKT_FLAG_STORED); /* must not touch a too-short buffer */
     CHECK(tiny[0] == 1 && tiny[3] == 4);
 
+    /* NULL arguments are rejected before anything is read or written */
+    p.type = PKT_DATA; p.mask = 0x0F; p.profile_id = PROFILE_WATER;
+    CHECK(packet_encoded_len(NULL) == -1);
+    memset(guard, 0xA5, sizeof guard);
+    CHECK(packet_encode(NULL, guard, sizeof guard) == -1);
+    int null_clean = 1;
+    for (size_t k = 0; k < sizeof guard; k++) if (guard[k] != 0xA5) null_clean = 0;
+    CHECK(null_clean);
+    CHECK(packet_encode(&p, NULL, PKT_MAX_LEN) == -1);
+    n = packet_encode(&p, buf, sizeof buf);
+    CHECK(n > 0);
+    CHECK(packet_decode(NULL, (size_t)n, &d) == -1);
+    CHECK(packet_decode(buf, (size_t)n, NULL) == -1);
+    uint8_t before[PKT_MAX_LEN];
+    memcpy(before, buf, (size_t)n);
+    CHECK(packet_decode(buf, (size_t)n, NULL) == -1 && memcmp(before, buf, (size_t)n) == 0);
+    packet_set_flags(NULL, (size_t)n, PKT_FLAG_STORED);   /* must simply return */
+    CHECK(packet_decode(buf, (size_t)n, &d) == 0);         /* original frame still valid */
+
     lora_cfg_t lc; lora_default_cfg(&lc);
     lc.sf = 7;  NEAR(lora_airtime_ms(&lc, 13, true), 46.336, 0.01);
     lc.sf = 12; NEAR(lora_airtime_ms(&lc, 13, true), 1155.072, 0.01);
