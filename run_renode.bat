@@ -7,6 +7,9 @@ rem %USERPROFILE%\tools\renode\  (https://github.com/renode/renode/releases)
 rem ---------------------------------------------------------------------------
 setlocal
 cd /d "%~dp0"
+rem The ARM image embeds a 3 h water trace; it is generated, not stored in git.
+call "%~dp0build.bat" || exit /b 1
+python python\generate_data.py --emit-c-header firmware\targets\stm32f4\trace_data.h --profile water --scenario sudden --hours 3 --dt 5 || exit /b 1
 call "%~dp0firmware\targets\stm32f4\build_arm.bat" || exit /b 1
 if "%RENODE%"=="" for /d %%D in ("%USERPROFILE%\tools\renode\renode_*") do if exist "%%~D\renode.exe" set "RENODE=%%~D\renode.exe"
 if "%RENODE%"=="" (echo ERROR: renode.exe not found - set RENODE & exit /b 1)

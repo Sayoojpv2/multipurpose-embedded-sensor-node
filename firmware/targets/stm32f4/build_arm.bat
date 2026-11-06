@@ -9,6 +9,7 @@ where %ARMCC% >nul 2>nul || (
   )
 )
 where %ARMCC% >nul 2>nul || (echo ERROR: arm-none-eabi-gcc not found & exit /b 1)
+if not exist firmware\targets\stm32f4\trace_data.h (echo ERROR: trace_data.h missing - run run_renode.bat, which generates it & exit /b 1)
 if not exist build mkdir build
 set FLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=soft -O2 -std=c99 -Wall -Wextra -ffunction-sections -fdata-sections -Ifirmware/include -Isimulation
 set FW=firmware/src/dsp.c firmware/src/event.c firmware/src/sampling.c firmware/src/packet.c firmware/src/comms.c firmware/src/storage.c firmware/src/sensor_manager.c firmware/src/telemetry.c firmware/src/energy.c firmware/src/node.c firmware/drivers/analog_drivers.c firmware/drivers/digital_drivers.c firmware/profiles/profile_water.c firmware/profiles/profile_air.c firmware/profiles/profile_soil.c firmware/profiles/profile_registry.c firmware/hal/hal_virtual.c

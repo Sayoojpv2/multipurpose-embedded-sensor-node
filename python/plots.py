@@ -176,7 +176,6 @@ def main():
     sweep_plot(rows("sweep_stable.csv"))
     timeline("water", "sudden", 0, "crit_lo", "timeline_water_sudden.png")
     timeline("air", "outage", 0, "crit_hi", "timeline_air_outage.png")
-    timeline("soil", "gradual", 0, "crit_lo", "timeline_soil_gradual.png")
 
 
 if __name__ == "__main__":

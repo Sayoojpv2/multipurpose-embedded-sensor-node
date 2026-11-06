@@ -14,4 +14,4 @@ strategy adaptive
   samples=102 packets=27 tx_attempts=30 delivered=27 airtime_ms=8919.0 energy_mJ=29242.8 records=102 crc_fail_at_gw=0
 DONE
 
-# sysbus.cpu ExecutedInstructions after the run: 0x0000000000B430A5 = 11808933
+# sysbus.cpu ExecutedInstructions after the run: 0x0000000000B43702 = 11810562
