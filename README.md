@@ -1,102 +1,103 @@
 # Multipurpose Embedded Environmental Sensor Node
 
-Portable C99 firmware for a **single configurable environmental sensor node**. The same firmware can be configured for water, air or soil monitoring by selecting an application profile.
+C99 firmware for **one** configurable environmental sensor node. The same firmware runs a water, air or soil monitoring profile. It reads and validates sensors, filters noise, detects abnormal conditions, adapts how often it samples and what it transmits, and sends packets to one simulated gateway. A simulation measures packet traffic, detection behaviour and estimated energy.
 
-The project focuses on the software inside one node: sensor drivers, signal processing, event detection, sampling control, local storage, telemetry and a low-power link model. A single simulated gateway is used as the receiver. There is no multi-node network or routing.
+The project is software-only. The firmware is real C code; the sensors, radio channel and gateway are simulation models. Energy figures are model estimates, not measurements.
 
-The project is software-only. Sensor devices and the radio are virtual models. The firmware runs in a native software-in-the-loop simulator and can also be cross-compiled for a Cortex-M4 image and executed on Renode's STM32F4 Discovery model.
+## Why
 
-## Applications
+Battery-powered environmental nodes spend most of their energy on sensor warm-up and radio transmission. Conventional firmware samples and transmits at a fixed period. This project asks how much traffic and energy an event-driven node saves, and what it costs in detection delay and data detail. Three application profiles share one firmware core, which keeps profile-specific code out of the shared modules.
 
-| Profile | Measurements |
-|---|---|
-| Water | pH, turbidity, electrical conductivity and temperature |
-| Air | PM2.5, CO2, relative humidity and temperature |
-| Soil | Soil moisture, soil temperature, electrical conductivity and light |
+## Profiles
 
-The application profile contains the sensor list, driver selection, calibration, thresholds, sampling intervals and reporting settings. The common firmware modules are shared by all profiles.
+| Profile | Channels | Status |
+|---|---|---|
+| **Water** (primary demonstration) | pH, turbidity, conductivity, temperature | used for the seed study and the Renode ARM run |
+| Air | PM2.5, CO2, humidity, temperature | secondary virtual profile |
+| Soil | moisture, soil temperature, conductivity, light | secondary virtual profile |
 
-## Firmware
+A profile is a constant table (`firmware/profiles/profile_*.c`) holding the sensor list, driver choice, calibration, thresholds, sampling intervals and reporting periods.
 
-The C firmware includes:
+## Main features
 
-- A hardware abstraction layer for ADC, I2C, SPI, UART, GPIO, timers and sensor power.
-- Sensor drivers and profile-based configuration.
-- Calibration, range checks, Hampel outlier rejection, moving-average and FIR filters.
-- Event detection with hysteresis and confirmation.
-- Adaptive sampling for stable, active, alert and recovery conditions.
-- A common telemetry packet format with CRC-16.
-- A link model with serialized airtime, ACK windows, bounded retries and outage backoff.
-- Local circular storage and store-and-forward transmission.
-- A configurable energy model.
+- HAL for ADC, I2C, SPI, UART, GPIO, timer and sensor power, backed by virtual devices that produce realistic bus data (ADC counts, register words with CRC-8, UART frames).
+- Range checks, a Hampel outlier filter, moving-average and FIR filtering.
+- Per-channel event state machine (normal / warning / critical / recovery / fault) with hysteresis and confirmation.
+- Adaptive sampling (stable / active / alert / recovery intervals) and event-driven telemetry (alert, update, summary).
+- Common binary packet with CRC-16; ACK, bounded retries, outage backoff and a store-and-forward queue.
+- Circular local log of every sample; charge-based energy estimate.
 
-## Build and run on Windows
+## Requirements
 
-Requirements: a C compiler (MinGW-w64 or the compiler bundled with OMNeT++), Python 3, NumPy and Matplotlib.
+- Windows: a C compiler (MinGW-w64 `gcc`, or the clang `gcc.exe` bundled with OMNeT++ 6.x, which `build.bat` finds automatically). Linux: `gcc` and `make`.
+- Python 3.10+ with `numpy` and `matplotlib` (`python -m pip install -r requirements.txt`).
+- Optional: MATLAB (filter cross-check), Arm GNU Toolchain + Renode 1.17 (Cortex-M4 emulation).
 
-Install the Python dependencies:
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-Build and run the complete test and experiment pipeline:
+## Build, run and test
 
 ```bat
 run.bat
 ```
 
-To build only the native simulator and C test executable:
+`run.bat` builds the code, runs the C unit tests, generates the traces, runs 90 simulations plus the 100-run seed study, writes the results and plots, and runs the Python tests. `run.bat matlab` adds the MATLAB filter check. On Linux, `make test` does the same (without MATLAB).
+
+Individual steps:
 
 ```bat
 build.bat
-```
-
-Run one profile and strategy:
-
-```bat
-build\sensor_node.exe --profile water --strategy adaptive --trace experiments\traces\water_sudden.csv --out out
-```
-
-Generate scenario traces first with `python python\generate_data.py`.
-
-## Build and test on Linux
-
-A Makefile is provided for GCC-based systems:
-
-```bash
-make
-make test
-```
-
-`make test` builds the firmware and runs the C tests, experiment matrix, result analysis, plots and Python pipeline tests.
-
-## Cortex-M4 emulation
-
-The optional ARM target is built with the Arm GNU Toolchain and run on Renode's `stm32f4_discovery` model:
-
-```bat
+build\test_firmware.exe
+python python\generate_data.py
+build\sensor_node.exe --profile water --strategy adaptive --trace experiments\traces\water_sudden.csv --out build
+python -m unittest discover -s tests -p "test_*.py"
 run_renode.bat
 ```
 
-The emulated target executes the compiled Cortex-M4 firmware and emulates the CPU, memory and USART console. Sensor devices and the radio remain virtual. This is not physical hardware validation.
+`--strategy` is `fixed`, `adaptive_tx` (fixed sampling, adaptive reporting) or `adaptive`. Each run writes `samples.csv`, `tx.csv`, `gateway.csv`, `storage_dump.csv` and `summary.json` to `--out`.
 
 ## Results
 
-The experiment scripts compare fixed-period reporting, adaptive telemetry with fixed sampling, and fully adaptive sampling on identical synthetic traces. Results include packet attempts, bytes, airtime, estimated energy, event detection, notification delay, data recovery and gateway reconstruction error.
+Synthetic 12 h (water, air) and 48 h (soil) traces; 8 scenarios per profile, totals over all 8; seed 42. Full tables are in [experiments/results/results_summary.md](experiments/results/results_summary.md), and the multi-seed check is in [seed_study.md](experiments/results/seed_study.md).
 
-The generated summary is in [experiments/results/results_summary.md](experiments/results/results_summary.md). The analysis uses synthetic traces and demonstration thresholds; the energy model is an estimate, not a power measurement.
+| Profile | Strategy | TX attempts | Est. energy [J] | Events detected | False alarms | Mean node detection delay [s] |
+|---|---|---|---|---|---|---|
+| water | fixed (60 s) | 6130 | 2022 | 4/4 | 0 | 350 |
+| water | adaptive | 725 | 964 | 4/4 | 0 | 187 |
+| air | fixed (60 s) | 6140 | 57800 | 4/4 | 0 | 415 |
+| air | adaptive | 1125 | 31831 | 4/4 | 0 | 254 |
+| soil | fixed (300 s) | 4988 | 604 | 4/4 | 0 | 1460 |
+| soil | adaptive | 870 | 185 | 4/4 | 0 | 545 |
 
-## Documentation
+- **Traffic:** adaptive reporting cuts radio transmissions by 82–88 %.
+- **Energy:** the estimated saving (45–69 %) depends on what dominates the budget. In the air profile the PM2.5 sensor's fan dominates, so adaptive *reporting* alone saves under 1 %; only sampling less often helps.
+- **Costs:**
+  - Sensor faults are detected later at long intervals (soil: 4892 s vs 692 s).
+  - Oscillating events take more samples than fixed reporting.
+  - The gateway sees a coarser picture.
+  - After a radio outage, alerts reach the gateway later on average (water seed study: 5961 s vs 5619 s).
+- **Seed study:** over 10 seeds (water), every event was detected and no false alarms occurred, with both strategies.
 
-- [Architecture](docs/architecture.md)
-- [Design and evaluation report](docs/technical_report.md)
-- [Related work and research comparison](docs/research_comparison.md)
+## Repository layout
+
+```
+firmware/     C99 firmware: include/, src/, drivers/, profiles/, hal/, targets/stm32f4/ (Renode image)
+simulation/   virtual sensor devices, radio channel + gateway, native harness (main_sim.c)
+python/       trace generation, experiment runner, analysis, plots, seed study
+matlab/       independent filter reference and C-vs-MATLAB check
+tests/        test_firmware.c (C unit/integration), test_pipeline.py (end-to-end)
+experiments/  configs/ and generated results/ (raw traces and runs are regenerated, not committed)
+docs/         architecture, technical report, related work, code walkthrough
+```
 
 ## Limitations
 
-- No physical sensor, microcontroller or radio hardware was used.
-- The virtual sensors reproduce selected bus formats and conversion behaviour; they do not model every electrical or environmental effect.
-- The radio uses a LoRa-style airtime calculation and application-level ACK model. It is not a LoRaWAN stack.
-- Energy values combine selected datasheet radio currents with documented assumptions for sensors, MCU activity and processing time.
-- Input traces are synthetic, and profile thresholds are demonstration settings rather than regulatory limits.
+- No physical hardware was used. Virtual devices reproduce bus formats and conversion equations, not real sensor physics.
+- The radio is a LoRa time-on-air model with application-level ACKs. It is not a LoRaWAN stack, and duty-cycle limits are reported but not enforced.
+- Only the three radio currents come from a datasheet (RAK3172); MCU and sensor currents are documented assumptions.
+- Traces are synthetic and thresholds are demonstration values. There are only 4 critical events per profile, so the detection statistics are indicative.
+- Renode emulates the Cortex-M4, memory and USART only; sensors and radio stay virtual inside the image.
+
+Further reading: [technical report](docs/technical_report.md) (design, method, results discussion), [architecture](docs/architecture.md), [code walkthrough](docs/code_walkthrough.md) (where to start reading the code) and [related work](docs/related_work.md).
+
+## Licence
+
+MIT.

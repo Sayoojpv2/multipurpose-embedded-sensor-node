@@ -18,6 +18,7 @@ echo === experiments ===
 python python\run_experiments.py || exit /b 1
 python python\analyse_results.py || exit /b 1
 python python\plots.py || exit /b 1
+python python\seed_study.py || exit /b 1
 echo.
 echo === pipeline tests ===
 python -m unittest discover -s tests -p "test_*.py" -v || exit /b 1

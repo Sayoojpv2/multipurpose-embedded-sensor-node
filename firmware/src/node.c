@@ -42,7 +42,7 @@ int node_init(node_t *n, const node_config_t *c, storage_t *st)
 
 static float sensor_on_time(const sensor_channel_cfg_t *c) { return c->pwr.warmup_s + c->pwr.measure_s; }
 
-uint32_t node_step(node_t *n, uint32_t now)
+uint32_t node_step(node_t *n, uint32_t wake_t)
 {
     const app_profile_t *p = n->prof;
     const energy_cfg_t *ec = &n->cfg.energy;
@@ -50,9 +50,11 @@ uint32_t node_step(node_t *n, uint32_t now)
     node_sample_log_t lg;
     memset(&lg, 0, sizeof lg);
 
-    /* ---- acquisition ---- */
-    uint8_t switched = sensor_manager_sample(&n->sm, now, lg.rd);
-    now = hal_timer_now_s();                 /* includes virtual sensor warm-up */
+    /* ---- acquisition ----
+     * Sensors switched on at wake_t need their warm-up first, so the
+     * readings (and everything after them) are time-stamped later. */
+    uint8_t switched = sensor_manager_sample(&n->sm, wake_t, lg.rd);
+    uint32_t now = hal_timer_now_s();
     float dt = n->first ? 0.0f : (float)(now - n->last_sample_t);
     lg.t = now;
 
@@ -124,14 +126,14 @@ uint32_t node_step(node_t *n, uint32_t now)
 
     /* ---- telemetry + link ---- */
     float air0 = n->link.st.airtime_ms, rx0 = n->link.st.rx_ms;
-    packet_t pk[2];
-    int k = telemetry_on_sample(&n->tel, p, n->cfg.strategy, now, lg.filt, lg.rd, lg.ch_state, lg.node_state, pk, 2);
-    for (int j = 0; j < k; j++) {
+    packet_t pk;
+    int k = telemetry_on_sample(&n->tel, p, n->cfg.strategy, now, lg.filt, lg.rd, lg.ch_state, lg.node_state, &pk);
+    if (k) {
         uint8_t buf[PKT_MAX_LEN];
-        pk[j].node_id = n->cfg.node_id; pk[j].profile_id = p->id; pk[j].seq = n->seq++;
-        int len = packet_encode(&pk[j], buf, sizeof buf);
+        pk.node_id = n->cfg.node_id; pk.profile_id = p->id; pk.seq = n->seq++;
+        int len = packet_encode(&pk, buf, sizeof buf);
         if (len > 0) {
-            link_submit(&n->link, buf, (uint8_t)len, pk[j].priority, pk[j].seq, pk[j].type, now);
+            link_submit(&n->link, buf, (uint8_t)len, pk.priority, pk.seq, pk.type, now);
             n->n_packets++;
         }
         n->e.q_proc += ec->mcu_active_ma * ec->proc_ms_per_packet / 1000.0f;
@@ -156,7 +158,12 @@ uint32_t node_step(node_t *n, uint32_t now)
     n->n_samples++;
     if (n->cb) n->cb(n->cb_ctx, &lg);
     n->last_sample_t = now; n->first = false;
-    n->next_t = now + iv;
+    /* The RTC alarm is set relative to the wake-up time, as real firmware
+     * would do, so a 60 s period stays 60 s regardless of sensor warm-up.
+     * Sensors whose warm-up exceeds the interval are kept powered (above),
+     * so the alarm can only be in the past for a degenerate configuration. */
+    n->next_t = wake_t + iv;
+    if (n->next_t <= now) n->next_t = now + 1u;
     hal_timer_set_wakeup(n->next_t);
     return n->next_t;
 }

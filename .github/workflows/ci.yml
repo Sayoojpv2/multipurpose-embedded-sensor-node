@@ -37,6 +37,8 @@ jobs:
                   experiments/results/profiles.json \
                   experiments/results/relative_vs_fixed.csv \
                   experiments/results/results_summary.md \
+                  experiments/results/seed_study.csv \
+                  experiments/results/seed_study.md \
                   experiments/results/sweep_loss.csv \
                   experiments/results/sweep_stable.csv \
                   experiments/results/plots/

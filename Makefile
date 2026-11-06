@@ -30,6 +30,7 @@ test: all
 	$(PYTHON) python/run_experiments.py
 	$(PYTHON) python/analyse_results.py
 	$(PYTHON) python/plots.py
+	$(PYTHON) python/seed_study.py
 	$(PYTHON) -m unittest discover -s tests -p "test_*.py"
 
 clean:

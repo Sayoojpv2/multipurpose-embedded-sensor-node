@@ -20,6 +20,13 @@ float ma_update(ma_filter_t *f, float x)
     f->sum += x - f->buf[f->idx];
     f->buf[f->idx] = x;
     f->idx = (uint8_t)((f->idx + 1) % f->len);
+    if (f->idx == 0) {
+        /* A float running sum slowly accumulates rounding error over
+         * thousands of updates. Re-summing once per buffer cycle keeps the
+         * average exact at a cost of len additions every len samples. */
+        f->sum = 0.0f;
+        for (uint8_t i = 0; i < f->len; i++) f->sum += f->buf[i];
+    }
     return f->sum / (float)f->len;
 }
 

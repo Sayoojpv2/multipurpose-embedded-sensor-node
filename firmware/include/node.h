@@ -61,10 +61,11 @@ typedef struct {
 } telemetry_t;
 
 void telemetry_init(telemetry_t *t);
-/* Fills up to max packets (header fields except seq/node/profile). Returns count. */
+/* Applies the reporting policy to one sample. Fills *pk (header fields except
+ * seq/node/profile) and returns 1 if a packet should be sent, else 0. */
 int  telemetry_on_sample(telemetry_t *t, const app_profile_t *p, uint8_t strategy, uint32_t now,
                          const float *filt, const sensor_reading_t *rd, const uint8_t *ch_state,
-                         uint8_t node_state, packet_t *out, int max);
+                         uint8_t node_state, packet_t *pk);
 
 /* ---------------- node ---------------- */
 typedef struct {
@@ -112,7 +113,7 @@ typedef struct {
 
 void     node_default_config(node_config_t *c);
 int      node_init(node_t *n, const node_config_t *c, storage_t *st);
-uint32_t node_step(node_t *n, uint32_t now);    /* returns next wake-up time */
+uint32_t node_step(node_t *n, uint32_t wake_t); /* one wake-up; returns the next wake-up time */
 void     node_finish(node_t *n, uint32_t end_t);
 uint32_t node_dsp_mac_ops(const node_t *n);
 

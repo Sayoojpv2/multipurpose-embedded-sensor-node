@@ -5,6 +5,7 @@
   "strategies": ["fixed", "adaptive_tx", "adaptive"],
   "scenarios": ["stable", "gradual", "sudden", "noisy", "sensor_failure", "missing", "outage", "recovery"],
   "detection_tolerance_s": 600,
+  "event_merge_s": 1800,
   "profiles": {
     "water": {
       "duration_h": 12, "dt_s": 1,
@@ -30,6 +31,10 @@
       "event_channel": 0, "event_dir": -1, "sudden_dir": 1,
       "fault_channel": 1, "missing_channel": 2
     }
+  },
+  "seed_study": {
+    "profile": "water", "seeds": 10, "strategies": ["fixed", "adaptive"],
+    "scenarios": ["gradual", "sudden", "noisy", "outage", "recovery"]
   },
   "sweeps": {
     "stable_interval_factor": [0.5, 1, 2, 4],

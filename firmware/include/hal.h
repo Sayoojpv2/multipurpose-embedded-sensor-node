@@ -40,7 +40,6 @@ int  hal_uart_read(uint8_t port, uint8_t *data, size_t len, uint32_t timeout_ms)
 /* Timer / RTC (1 s resolution node time). */
 uint32_t hal_timer_now_s(void);
 void     hal_timer_set_wakeup(uint32_t t_s);
-uint32_t hal_timer_get_wakeup(void);
 
 /* GPIO and sensor power control (load switch per power rail). */
 void hal_gpio_write(uint8_t pin, bool level);

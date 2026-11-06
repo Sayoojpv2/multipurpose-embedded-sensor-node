@@ -433,6 +433,15 @@ static void test_warmup_and_radio_timing(void)
     CHECK(link.st.delivered == 2);
     CHECK(gateway_stats()->rx_ok == 2);
     CHECK(link.next_tx_ms == 100000u + 2u * occupied_ms);
+
+    /* The wake-up period is measured from the RTC wake time, so sensor
+     * warm-up (31 s for the PM sensor) must not stretch a 60 s fixed period. */
+    trace_const(NOM_AIR);
+    run_stats_t fx = run_node(PROFILE_AIR, STRAT_FIXED, 1, 0.0f, NULL);
+    CHECK(fx.samples == ROWS * DT / PROFILE_AIR_CFG.sampling.fixed_s);
+    trace_const(NOM_WATER);
+    fx = run_node(PROFILE_WATER, STRAT_FIXED, 1, 0.0f, NULL);
+    CHECK(fx.samples == ROWS * DT / PROFILE_WATER_CFG.sampling.fixed_s);
 }
 
 static void test_outage(void)

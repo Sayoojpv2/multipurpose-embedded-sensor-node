@@ -87,6 +87,6 @@ Sizes: DATA with 4 channels is 30 B; ALERT with 1 channel is 18 B; SUMMARY with 
 
 ## Timing model
 
-When a sensor rail is switched on, the sensor manager finds the longest configured warm-up plus measurement interval among the newly enabled sensors. The virtual clock advances by that interval before the drivers read the devices. The energy model charges each newly enabled sensor for the same shared power-up interval. This models elapsed application time; it does not simulate analog settling physics or measure MCU cycles.
-
-The radio link keeps a shared millisecond timeline. Each queued packet starts after the preceding uplink airtime and ACK receive interval. Failed attempts include the receive timeout and configured retry backoff. Gateway receive timestamps are recorded at the end of uplink airtime. This is a LoRa-style link model, not a LoRaWAN MAC implementation.
+- **Wake-ups.** `node_step(n, wake_t)` returns `wake_t + interval`, the time the RTC alarm would be set to. Sensor warm-up happens *inside* the period, so a 60 s fixed period stays 60 s. If the next interval is shorter than a sensor's warm-up plus measurement time, that sensor stays powered between samples (the PM2.5 sensor in 30 s alert mode).
+- **Sensor warm-up.** All sensors switched on at a wake-up are powered together. The model clock (`hal_sim_advance_time_ms`) advances by the longest warm-up + measurement time before the drivers read, so readings are time-stamped after warm-up. The energy model charges each switched sensor for that same interval. This is application time, not analog settling physics or MCU cycle timing.
+- **Radio.** The link keeps one millisecond timeline (`link_t.next_tx_ms`). Each attempt occupies the uplink airtime plus either the ACK airtime or the receive timeout, and failed attempts add a 2–6 s random backoff. The gateway time-stamps a packet at the end of its uplink airtime. The link is serviced, and probed during outages, only when the node wakes.
